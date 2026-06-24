@@ -351,6 +351,21 @@ $options = wpmme_get_options();
             </div>
         </div>
 
+        <h2 class="wpmme-section-title"><span class="dashicons dashicons-update"></span> Plugin Updates</h2>
+        
+        <div class="wpmme-card has-body">
+            <div class="wpmme-card-header">
+                <div class="wpmme-card-info">
+                    <h3>Manual Update</h3>
+                    <p>Force the plugin to download and update to the latest code from GitHub main branch.</p>
+                </div>
+            </div>
+            <div class="wpmme-card-body">
+                <p class="description">Clicking the button below will download the latest ZIP from GitHub, extract it, and overwrite this plugin. Use with caution.</p>
+                <button type="button" class="button button-secondary wpmme-btn-action" id="btn-force-update">Pull Latest from GitHub</button>
+            </div>
+        </div>
+
     </form>
 </div>
 

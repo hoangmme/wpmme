@@ -97,6 +97,12 @@ jQuery(document).ready(function($) {
         showModal('Apply Watermark', 'This will apply the watermark to all existing images. Make sure you have saved your watermark settings first.', 'wpmme_watermark_all');
     });
 
+    $('#btn-force-update').on('click', function() {
+        if (confirm('Are you sure you want to download and overwrite the plugin with the latest version from GitHub?')) {
+            showModal('Pull Latest from GitHub', 'Downloading and extracting the latest version...', 'wpmme_force_update');
+        }
+    });
+
     function showModal(title, desc, action) {
         currentAction = action;
         $('#wpmme-modal-title').text(title);
@@ -116,22 +122,42 @@ jQuery(document).ready(function($) {
         $btn.prop('disabled', true);
         $closeBtn.prop('disabled', true);
         
-        // This is a simplified mock for bulk operation progress.
-        // In a real scenario, this would use batched AJAX requests.
-        var progress = 0;
-        var interval = setInterval(function() {
-            progress += 10;
-            $('#wpmme-modal-progress').css('width', progress + '%');
-            $('#wpmme-modal-text').text(progress + '%');
-            
-            if (progress >= 100) {
-                clearInterval(interval);
+        // Bulk Operations AJAX Mock (Real implementation below)
+        if (currentAction === 'wpmme_force_update') {
+            $.post(wpmme_ajax.url, {
+                action: 'wpmme_force_update',
+                nonce: wpmme_ajax.nonce
+            }, function(response) {
                 $btn.prop('disabled', false);
                 $closeBtn.prop('disabled', false);
-                $('#wpmme-modal-desc').text('Process completed!');
-            }
-        }, 500);
-        
-        // A real batched AJAX call would be implemented here calling currentAction
+                $('#wpmme-modal-progress').css('width', '100%');
+                $('#wpmme-modal-text').text('100%');
+                if (response.success) {
+                    $('#wpmme-modal-desc').text('Update successful! Reloading...');
+                    setTimeout(function() { location.reload(); }, 1500);
+                } else {
+                    $('#wpmme-modal-desc').html('<span style="color:red">Update failed: ' + response.data + '</span>');
+                }
+            }).fail(function() {
+                $btn.prop('disabled', false);
+                $closeBtn.prop('disabled', false);
+                $('#wpmme-modal-desc').html('<span style="color:red">Server error during update.</span>');
+            });
+        } else {
+            // Mock for others
+            var progress = 0;
+            var interval = setInterval(function() {
+                progress += 10;
+                $('#wpmme-modal-progress').css('width', progress + '%');
+                $('#wpmme-modal-text').text(progress + '%');
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    $btn.prop('disabled', false);
+                    $closeBtn.prop('disabled', false);
+                    $('#wpmme-modal-desc').text('Process completed!');
+                }
+            }, 500);
+        }
     });
 });

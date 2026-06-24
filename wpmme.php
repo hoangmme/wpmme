@@ -35,6 +35,7 @@ require_once WPMME_DIR . 'inc/class-login.php';
 require_once WPMME_DIR . 'inc/class-admin-bar.php';
 require_once WPMME_DIR . 'inc/class-limit-login.php';
 require_once WPMME_DIR . 'inc/class-media-replace.php';
+require_once WPMME_DIR . 'inc/class-updater.php';
 
 // Initialize Plugin
 function wpmme_init() {
@@ -85,6 +86,8 @@ function wpmme_init() {
     if (!empty($options['media_replace'])) {
         new WPMME_Media_Replace();
     }
+    
+    new WPMME_Updater();
 }
 add_action('plugins_loaded', 'wpmme_init');
 
