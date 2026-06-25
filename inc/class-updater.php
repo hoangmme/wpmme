@@ -9,7 +9,7 @@ class WPMME_Updater {
     }
 
     public function handle_force_update() {
-        check_ajax_referer('wpmme_admin_nonce', 'nonce');
+        check_ajax_referer('wpmme_nonce', 'nonce');
 
         if (!current_user_can('manage_options')) {
             wp_send_json_error('Permission denied.');
