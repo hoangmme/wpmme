@@ -13,7 +13,7 @@ class WPMME_Rename {
     }
 
     public function rename_file_on_upload($file) {
-        $pattern = !empty($this->options['rename_pattern']) ? $this->options['rename_pattern'] : '{domain}';
+        $pattern = !empty($this->options['rename_pattern']) ? $this->options['rename_pattern'] : '{domain}-{date}-{random}';
         
         $domain = preg_replace('/^www\./', '', wp_parse_url(home_url(), PHP_URL_HOST));
         $domain = preg_replace('/[^a-z0-9]/', '-', strtolower($domain));

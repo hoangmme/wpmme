@@ -122,7 +122,7 @@ function wpmme_get_default_options() {
         'auto_upload'          => true,
         'imgattr'              => true,
         'rename'               => true,
-        'rename_pattern'       => '{domain}',
+        'rename_pattern'       => '{domain}-{date}-{random}',
         'webp'                 => true,
         'webp_quality'         => 82,
         'watermark'            => false,
