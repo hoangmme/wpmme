@@ -75,7 +75,7 @@ class WPMME_Login {
             }
         }, 1);
 
-        // 2. Block direct wp-login.php access
+        // 2. Block direct wp-login.php access and prevent /wp-admin/ from leaking the slug
         add_action('init', function () {
             $request_path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
             $is_wp_login = (strpos($request_path, 'wp-login.php') !== false);
@@ -93,6 +93,22 @@ class WPMME_Login {
 
                 // Block access - return 404
                 global $wp_query;
+                if (!isset($wp_query)) $wp_query = new WP_Query();
+                $wp_query->set_404();
+                status_header(404);
+                nocache_headers();
+                include(get_query_template('404'));
+                exit;
+            }
+
+            // Prevent /wp-admin/ from redirecting and revealing the secret slug for unauthenticated users
+            if (is_admin() && !is_user_logged_in() && !defined('DOING_AJAX')) {
+                if (strpos($request_path, 'admin-post.php') !== false || strpos($request_path, 'load-styles.php') !== false || strpos($request_path, 'load-scripts.php') !== false) {
+                    return;
+                }
+
+                global $wp_query;
+                if (!isset($wp_query)) $wp_query = new WP_Query();
                 $wp_query->set_404();
                 status_header(404);
                 nocache_headers();
