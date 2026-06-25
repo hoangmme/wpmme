@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WPMME
  * Plugin URI: https://mme.vn
- * Description: All-in-One Optimization & Security plugin combining features from WP Extra & Fox Tool.
+ * Description: All-in-One Optimization & Security plugin by MMe.
  * Version: 1.0.0
  * Author: Hoji
  * Author URI: https://mme.vn
