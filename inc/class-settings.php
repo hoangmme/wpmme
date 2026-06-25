@@ -57,6 +57,9 @@ class WPMME_Settings {
         if (isset($_POST['login_slug_value'])) {
             $options['login_slug_value'] = sanitize_title($_POST['login_slug_value']);
         }
+        if (isset($_POST['limit_login_retries'])) {
+            $options['limit_login_retries'] = absint($_POST['limit_login_retries']);
+        }
 
         update_option('wpmme_options', $options);
 

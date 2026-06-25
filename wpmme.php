@@ -118,7 +118,7 @@ function wpmme_get_default_options() {
     return array(
         'classic_editor'       => true,
         'tinymce_plugins'      => true,
-        'image_seo'            => true,
+        'image_seo'            => false,
         'auto_upload'          => true,
         'imgattr'              => true,
         'rename'               => true,
@@ -143,6 +143,7 @@ function wpmme_get_default_options() {
         'media_replace'        => true,
         'admin_bar_clean'      => true,
         'limit_login'          => true,
+        'limit_login_retries'  => 4,
     );
 }
 
