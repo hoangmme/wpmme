@@ -59,7 +59,7 @@ class WPMME_Updater {
         }
 
         // Copy files over
-        $plugin_dir = WPMME_PATH;
+        $plugin_dir = WPMME_DIR;
         $copy_result = copy_dir($source_dir, $plugin_dir);
 
         // Clean up
