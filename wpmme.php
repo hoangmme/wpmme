@@ -36,6 +36,7 @@ require_once WPMME_DIR . 'inc/class-admin-bar.php';
 require_once WPMME_DIR . 'inc/class-limit-login.php';
 require_once WPMME_DIR . 'inc/class-media-replace.php';
 require_once WPMME_DIR . 'inc/class-updater.php';
+require_once WPMME_DIR . 'inc/class-deploy.php';
 
 // Initialize Plugin
 function wpmme_init() {
@@ -88,6 +89,7 @@ function wpmme_init() {
     }
     
     new WPMME_Updater();
+    new WPMME_Deploy();
 }
 add_action('plugins_loaded', 'wpmme_init');
 
