@@ -180,4 +180,13 @@ function wpmme_admin_assets($hook) {
         'url'   => admin_url('admin-ajax.php'),
         'nonce' => wp_create_nonce('wpmme_nonce')
     ));
+
+    // Polyfill for ACF / SCF to prevent JS errors on our custom page
+    wp_add_inline_script('wpmme-admin-js', 'window.acf = window.acf || {}; window.acf.add_filter = window.acf.add_filter || function() {}; window.acf.add_action = window.acf.add_action || function() {};', 'before');
+
+    // Dequeue known conflicting plugin scripts on our page
+    wp_dequeue_script('acf-input');
+    wp_dequeue_script('acf-pro-input');
+    wp_dequeue_script('scf-admin');
+    wp_dequeue_script('smart-custom-fields');
 }
