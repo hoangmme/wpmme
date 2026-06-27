@@ -30,14 +30,20 @@ class WPMME_Deploy {
         // Tạo request nội bộ (local request) gọi tới cổng 8989 của womme-daemon.py
         $daemon_url = "http://127.0.0.1:8989/hooks/" . urlencode($domain);
 
+        // Chuyển tiếp toàn bộ Header (để check Signature) và Body (chứa URL repo)
+        $headers = array();
+        foreach ($request->get_headers() as $key => $value) {
+            $headers[$key] = is_array($value) ? $value[0] : $value;
+        }
+
         $args = array(
             'method'      => 'POST',
             'timeout'     => 5, // Timeout ngắn vì ta chỉ cần kích hoạt, không cần đợi deploy xong
             'redirection' => 5,
             'httpversion' => '1.0',
             'blocking'    => false, // Non-blocking: Kích hoạt xong trả về ngay cho Github đỡ báo lỗi Timeout
-            'headers'     => array(),
-            'body'        => array(),
+            'headers'     => $headers,
+            'body'        => $request->get_body(),
             'cookies'     => array()
         );
 
