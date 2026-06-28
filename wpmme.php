@@ -3,7 +3,7 @@
  * Plugin Name: WPMME
  * Plugin URI: https://mme.vn
  * Description: All-in-One Optimization & Security plugin by MMe.
- * Version: 1.0.0
+ * Version: 1.0.0 (Build 20260628.1505)
  * Author: Hoji
  * Author URI: https://mme.vn
  * Text Domain: wpmme
