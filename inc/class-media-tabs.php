@@ -71,11 +71,16 @@ class WPMME_Media_Tabs {
                 );
             }
         }
+        $active_tab = get_user_meta(get_current_user_id(), 'wpmme_active_media_tab', true);
+        if (empty($active_tab)) {
+            $active_tab = 'all';
+        }
 
         wp_localize_script('wpmme-media-tabs-js', 'wpmme_media_tabs_obj', array(
             'ajaxurl' => admin_url('admin-ajax.php'),
             'nonce'   => wp_create_nonce('wpmme_media_tabs_nonce'),
             'tabs'    => $tabs_data,
+            'active_tab' => $active_tab,
         ));
     }
 
@@ -145,6 +150,9 @@ class WPMME_Media_Tabs {
         if (isset($_REQUEST['query']) && is_array($_REQUEST['query']) && isset($_REQUEST['query']['wpmme_media_tab']) && $_REQUEST['query']['wpmme_media_tab'] !== 'all') {
             $term_id = intval($_REQUEST['query']['wpmme_media_tab']);
             if ($term_id > 0) {
+                if (isset($query['wpmme_media_tab'])) {
+                    unset($query['wpmme_media_tab']);
+                }
                 $query['tax_query'] = array(
                     array(
                         'taxonomy' => 'wpmme_media_tab',
