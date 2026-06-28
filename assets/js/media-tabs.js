@@ -26,35 +26,41 @@ jQuery(document).ready(function($) {
             tab_id: currentTab
         });
 
-        // 1. Update wp.Uploader defaults
+        // Update uploader params for known instances
         if (typeof wp.Uploader !== 'undefined' && wp.Uploader.defaults) {
             wp.Uploader.defaults.multipart_params.wpmme_media_tab = currentTab;
         }
 
-        // 2. Update Media Modal Plupload instance natively
-        if (wp.media.frame && wp.media.frame.uploader && wp.media.frame.uploader.uploader && wp.media.frame.uploader.uploader.uploader) {
-            var pluploadInst = wp.media.frame.uploader.uploader.uploader;
-            if (currentTab !== 'all') {
-                pluploadInst.settings.multipart_params.wpmme_media_tab = currentTab;
-            } else {
-                delete pluploadInst.settings.multipart_params.wpmme_media_tab;
-            }
-        }
-        
-        // 3. Update Grid View Plupload instance natively
-        if (typeof uploader !== 'undefined' && uploader.settings) {
-            if (currentTab !== 'all') {
-                uploader.settings.multipart_params.wpmme_media_tab = currentTab;
-            } else {
-                delete uploader.settings.multipart_params.wpmme_media_tab;
-            }
-        }
-
         // 4. Update the Backbone collection filter
-        if (wp.media.frame && wp.media.frame.content && wp.media.frame.content.get() && wp.media.frame.content.get().collection) {
+        if (wp.media && wp.media.frame && wp.media.frame.content && wp.media.frame.content.get() && wp.media.frame.content.get().collection) {
             var collection = wp.media.frame.content.get().collection;
             collection.props.set({wpmme_media_tab: currentTab, ignore: (+ new Date())});
         }
+    }
+
+    // Bulletproof Plupload interceptor
+    if (typeof plupload !== 'undefined' && plupload.Uploader) {
+        var originalPluploadInit = plupload.Uploader.prototype.init;
+        plupload.Uploader.prototype.init = function() {
+            if (originalPluploadInit) {
+                originalPluploadInit.apply(this, arguments);
+            }
+            
+            this.bind('BeforeUpload', function(up, file) {
+                if (currentTab !== 'all') {
+                    up.settings.multipart_params.wpmme_media_tab = currentTab;
+                } else {
+                    delete up.settings.multipart_params.wpmme_media_tab;
+                }
+            });
+
+            this.bind('FileUploaded', function(up, file, response) {
+                // Refresh grid on success
+                if (wp.media && wp.media.frame && wp.media.frame.content && wp.media.frame.content.get() && wp.media.frame.content.get().collection) {
+                    wp.media.frame.content.get().collection.props.set({ignore: (+ new Date())});
+                }
+            });
+        };
     }
 
     // Set default tab on load to clear state
@@ -75,6 +81,14 @@ jQuery(document).ready(function($) {
             });
         }
     }
+    
+    // Aggressively attempt to hook the uploader queue since it may initialize late
+    var queueHookInterval = setInterval(function() {
+        if (typeof wp !== 'undefined' && wp.Uploader && wp.Uploader.queue) {
+            hookUploaderQueue();
+            clearInterval(queueHookInterval);
+        }
+    }, 50);
 
     // Modal view injection
     if (wp.media && wp.media.view && wp.media.view.MediaFrame) {
