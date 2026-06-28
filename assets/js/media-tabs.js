@@ -16,45 +16,6 @@ jQuery(document).ready(function($) {
         return $container;
     }
 
-    // Hook into wp.Uploader (Plupload wrapper in WP) to manage uploads natively
-    if (typeof wp !== 'undefined' && typeof wp.Uploader !== 'undefined') {
-        var originalUploaderInit = wp.Uploader.prototype.init;
-        wp.Uploader.prototype.init = function() {
-            if (originalUploaderInit) {
-                originalUploaderInit.apply(this, arguments);
-            }
-
-            var self = this;
-            
-            // 1. Ensure multipart_params is sent during upload
-            this.uploader.bind('BeforeUpload', function(up, file) {
-                if (currentTab !== 'all') {
-                    up.settings.multipart_params.wpmme_media_tab = currentTab;
-                }
-            });
-
-            // 2. Ensure placeholder shows up by adding taxonomy to local model
-            this.uploader.bind('FilesAdded', function(up, files) {
-                if (currentTab !== 'all' && wp.Uploader.queue) {
-                    _.each(files, function(file) {
-                        var model = wp.Uploader.queue.get(file.id);
-                        if (model) {
-                            model.set('wpmme_media_tab', parseInt(currentTab, 10));
-                        }
-                    });
-                }
-            });
-
-            // 3. Force refresh grid on upload success to guarantee the new image shows
-            this.uploader.bind('FileUploaded', function(up, file, response) {
-                if (wp.media.frame && wp.media.frame.content && wp.media.frame.content.get() && wp.media.frame.content.get().collection) {
-                    var collection = wp.media.frame.content.get().collection;
-                    collection.props.set({ignore: (+ new Date())});
-                }
-            });
-        };
-    }
-
     function updateQueryAndUploader(tabId) {
         currentTab = tabId;
 
@@ -65,12 +26,33 @@ jQuery(document).ready(function($) {
             tab_id: currentTab
         });
 
-        // Try to update the current media frame collection
+        // 1. Update wp.Uploader defaults
+        if (typeof wp.Uploader !== 'undefined' && wp.Uploader.defaults) {
+            wp.Uploader.defaults.multipart_params.wpmme_media_tab = currentTab;
+        }
+
+        // 2. Update Media Modal Plupload instance natively
+        if (wp.media.frame && wp.media.frame.uploader && wp.media.frame.uploader.uploader && wp.media.frame.uploader.uploader.uploader) {
+            var pluploadInst = wp.media.frame.uploader.uploader.uploader;
+            if (currentTab !== 'all') {
+                pluploadInst.settings.multipart_params.wpmme_media_tab = currentTab;
+            } else {
+                delete pluploadInst.settings.multipart_params.wpmme_media_tab;
+            }
+        }
+        
+        // 3. Update Grid View Plupload instance natively
+        if (typeof uploader !== 'undefined' && uploader.settings) {
+            if (currentTab !== 'all') {
+                uploader.settings.multipart_params.wpmme_media_tab = currentTab;
+            } else {
+                delete uploader.settings.multipart_params.wpmme_media_tab;
+            }
+        }
+
+        // 4. Update the Backbone collection filter
         if (wp.media.frame && wp.media.frame.content && wp.media.frame.content.get() && wp.media.frame.content.get().collection) {
             var collection = wp.media.frame.content.get().collection;
-            
-            // To force a refresh, we need to set the property. 
-            // Backbone will only re-fetch if a property changes.
             collection.props.set({wpmme_media_tab: currentTab, ignore: (+ new Date())});
         }
     }
@@ -82,6 +64,18 @@ jQuery(document).ready(function($) {
         tab_id: 'all'
     });
 
+    // Hook queue add early to ensure placeholders show up in custom tabs
+    function hookUploaderQueue() {
+        if (typeof wp !== 'undefined' && wp.Uploader && wp.Uploader.queue && !wp.Uploader.queue._wpmme_hooked) {
+            wp.Uploader.queue._wpmme_hooked = true;
+            wp.Uploader.queue.on('add', function(model) {
+                if (currentTab !== 'all') {
+                    model.set('wpmme_media_tab', parseInt(currentTab, 10));
+                }
+            });
+        }
+    }
+
     // Modal view injection
     if (wp.media && wp.media.view && wp.media.view.MediaFrame) {
         var originalInit = wp.media.view.MediaFrame.prototype.initialize;
@@ -91,16 +85,14 @@ jQuery(document).ready(function($) {
             }
             
             this.on('ready', function() {
-                // Do not inject in modal view if we are on upload.php grid mode
+                hookUploaderQueue();
+
                 if ($('body').hasClass('upload-php')) return;
 
                 var frame = this;
                 var $tabs = renderTabs();
                 
-                // Prepend tabs to the content area
                 frame.$el.find('.media-frame-content').prepend($tabs);
-
-                // Need to adjust top positioning for views because we injected tabs
                 frame.$el.find('.media-frame-content > .attachments-browser').css('top', '40px');
             });
         };
@@ -111,77 +103,73 @@ jQuery(document).ready(function($) {
         var $tabs = renderTabs();
         $('.wrap').find('.wp-header-end').after($tabs);
         
-        // Force show the uploader correctly via WP's own button to ensure Plupload shim is calculated
         setTimeout(function() {
             if ($('.page-title-action').length && !$('.uploader-inline').is(':visible')) {
                 $('.page-title-action').first().click();
             }
         }, 500);
 
-        // Poll for frame ready since it initializes asynchronously
         var gridCheck = setInterval(function() {
             if (wp.media.frame && wp.media.frame.content) {
+                hookUploaderQueue();
                 clearInterval(gridCheck);
             }
         }, 100);
     }
 
-    // Event Listeners (Delegated so it works for both Modal and Grid)
+    // Tab clicks
     $(document).on('click', '.wpmme-media-tab', function() {
         var $tab = $(this);
-        var tabId = $tab.data('id');
-        
-        // Update active class
-        $('.wpmme-media-tab').removeClass('active');
-        // Select all instances (modal and grid could theoretically both exist)
-        $('.wpmme-media-tab[data-id="'+tabId+'"]').addClass('active');
+        if ($tab.hasClass('active')) return;
 
+        $('.wpmme-media-tab').removeClass('active');
+        $tab.addClass('active');
+
+        var tabId = $tab.data('id');
         updateQueryAndUploader(tabId);
     });
 
+    // Add new tab
     $(document).on('click', '.wpmme-media-tab-add', function() {
-        var name = prompt("Enter new tab name:");
-        if (name) {
+        var tabName = prompt('Enter new tab name:');
+        if (tabName) {
             $.post(wpmme_media_tabs_obj.ajaxurl, {
                 action: 'wpmme_add_media_tab',
                 nonce: wpmme_media_tabs_obj.nonce,
-                tab_name: name
-            }, function(res) {
-                if (res.success) {
-                    wpmme_media_tabs_obj.tabs.push(res.data);
-                    var $newTab = $('<div class="wpmme-media-tab" data-id="'+res.data.term_id+'"><span class="tab-name">'+res.data.name+'</span><span class="tab-rename dashicons dashicons-edit" title="Rename"></span></div>');
-                    $newTab.insertBefore($('.wpmme-media-tab-add'));
+                tab_name: tabName
+            }, function(response) {
+                if (response.success) {
+                    var newTab = $('<div class="wpmme-media-tab" data-id="'+response.data.term_id+'"><span class="tab-name">'+response.data.name+'</span><span class="tab-rename dashicons dashicons-edit" title="Rename"></span></div>');
+                    $('.wpmme-media-tab-add').before(newTab);
+                    newTab.click();
                 } else {
-                    alert(res.data);
+                    alert('Error: ' + response.data);
                 }
             });
         }
     });
 
+    // Rename tab
     $(document).on('click', '.tab-rename', function(e) {
         e.stopPropagation();
-        var $tab = $(this).parent();
-        var id = $tab.data('id');
+        var $tab = $(this).closest('.wpmme-media-tab');
+        var termId = $tab.data('id');
         var oldName = $tab.find('.tab-name').text();
-        var newName = prompt("Rename tab:", oldName);
         
+        var newName = prompt('Enter new name for this tab:', oldName);
         if (newName && newName !== oldName) {
             $.post(wpmme_media_tabs_obj.ajaxurl, {
                 action: 'wpmme_rename_media_tab',
                 nonce: wpmme_media_tabs_obj.nonce,
-                term_id: id,
+                term_id: termId,
                 new_name: newName
-            }, function(res) {
-                if (res.success) {
-                    $('.wpmme-media-tab[data-id="'+id+'"]').find('.tab-name').text(newName);
-                    $.each(wpmme_media_tabs_obj.tabs, function(i, t) {
-                        if (t.term_id == id) t.name = newName;
-                    });
+            }, function(response) {
+                if (response.success) {
+                    $tab.find('.tab-name').text(newName);
                 } else {
-                    alert(res.data);
+                    alert('Error: ' + response.data);
                 }
             });
         }
     });
-
 });
