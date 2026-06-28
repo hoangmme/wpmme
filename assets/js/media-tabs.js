@@ -5,9 +5,9 @@ jQuery(document).ready(function($) {
     
     // Inject custom tabs into the Grid View UI
     function injectTabs() {
-        if ($('.wpmme-media-tabs-container').length) return;
+        if ($('.wpmme-media-tabs').length) return;
 
-        var $tabsContainer = $('<div class="wpmme-media-tabs-container"></div>');
+        var $tabsContainer = $('<div class="wpmme-media-tabs"></div>');
         
         var isAllActive = (currentTab === 'all') ? ' active' : '';
         var $allTab = $('<button type="button" class="wpmme-media-tab' + isAllActive + '"></button>')
@@ -41,7 +41,7 @@ jQuery(document).ready(function($) {
     // Grid View injection (upload.php)
     if ($('body').hasClass('upload-php') && $('.wrap').length) {
         var observer = new MutationObserver(function(mutations) {
-            if ($('.media-toolbar').length && !$('.wpmme-media-tabs-container').length) {
+            if ($('.media-toolbar').length && !$('.wpmme-media-tabs').length) {
                 injectTabs();
             }
         });
