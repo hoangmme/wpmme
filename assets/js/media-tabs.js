@@ -72,17 +72,70 @@ jQuery(document).ready(function($) {
         originalOpen.apply(this, arguments);
     };
 
-    // Override Attachment initialization to inject currentTab into newly created client-side models (e.g. uploads)
-    if (typeof wp !== 'undefined' && wp.media && wp.media.model && wp.media.model.Attachment) {
-        var originalAttachmentInit = wp.media.model.Attachment.prototype.initialize;
-        wp.media.model.Attachment.prototype.initialize = function() {
+    // Patch wp.media.model.Query to make the validator ignore our custom param
+    // This is critical: without this, the Backbone validator rejects newly uploaded
+    // attachments because it doesn't know how to compare 'wpmme_media_tab'
+    if (typeof wp !== 'undefined' && wp.media && wp.media.model && wp.media.model.Query) {
+        var _originalQueryGet = wp.media.model.Query.get;
+        wp.media.model.Query.get = function(props, options) {
+            // Inject our tab filter into the query props
             if (currentTab !== 'all') {
-                this.set('wpmme_media_tab', parseInt(currentTab, 10));
-            }
-            if (originalAttachmentInit) {
-                originalAttachmentInit.apply(this, arguments);
+                props.wpmme_media_tab = parseInt(currentTab, 10);
             } else {
-                Backbone.Model.prototype.initialize.apply(this, arguments);
+                delete props.wpmme_media_tab;
+            }
+
+            var query = _originalQueryGet.call(this, props, options);
+
+            // Patch the validator only once per query instance
+            if (!query._wpmme_validator_patched) {
+                var originalValidator = query.validator;
+                query.validator = function(attachment) {
+                    // Temporarily remove wpmme_media_tab from args so
+                    // WP's built-in validator doesn't reject the attachment
+                    var savedTab = this.args.wpmme_media_tab;
+                    delete this.args.wpmme_media_tab;
+                    var passed = originalValidator.call(this, attachment);
+                    // Restore it
+                    if (savedTab !== undefined) {
+                        this.args.wpmme_media_tab = savedTab;
+                    }
+
+                    // If it passed the basic WP checks, also check our tab filter
+                    if (passed && savedTab !== undefined) {
+                        var attTab = attachment.get('wpmme_media_tab');
+                        // Allow if attachment has matching tab, or if it's still uploading (no tab yet)
+                        if (attTab !== undefined && attTab !== savedTab) {
+                            return false;
+                        }
+                    }
+                    return passed;
+                };
+                query._wpmme_validator_patched = true;
+            }
+            return query;
+        };
+    }
+
+    // Override wp.Uploader to refresh the collection after upload completes
+    if (typeof wp !== 'undefined' && wp.Uploader) {
+        var _originalSuccess = wp.Uploader.prototype.success;
+        wp.Uploader.prototype.success = function(file_attachment) {
+            if (_originalSuccess) {
+                _originalSuccess.apply(this, arguments);
+            }
+
+            // After upload, force-refresh the current query to show new attachment
+            if (currentTab !== 'all') {
+                setTimeout(function() {
+                    if (wp.media && wp.media.frame && wp.media.frame.content) {
+                        var content = wp.media.frame.content.get();
+                        if (content && content.collection) {
+                            // Trigger a re-fetch by changing a dummy prop
+                            content.collection.props.set({ _wpmme_refresh: +new Date() });
+                        }
+                    }
+                }, 500);
             }
         };
     }
@@ -97,28 +150,16 @@ jQuery(document).ready(function($) {
             nonce: wpmme_media_tabs_obj.nonce
         });
 
-        // 1. Update wp.media frame props natively
+        // Update wp.media frame props to trigger a re-query
         if (wp.media && wp.media.frame && wp.media.frame.content && wp.media.frame.content.get() && wp.media.frame.content.get().collection) {
-            var props = wp.media.frame.content.get().collection.props;
+            var collection = wp.media.frame.content.get().collection;
             if (currentTab !== 'all') {
-                props.set({ wpmme_media_tab: currentTab });
+                collection.props.set({ wpmme_media_tab: parseInt(currentTab, 10) });
             } else {
-                props.set({ wpmme_media_tab: '' });
-                props.unset('wpmme_media_tab');
+                collection.props.unset('wpmme_media_tab');
+                // Force refresh
+                collection.props.set({ _wpmme_refresh: +new Date() });
             }
-        }
-
-        // 2. Fallback for custom grids
-        if (typeof wp !== 'undefined' && wp.media && wp.media.model && wp.media.model.Query) {
-            var originalGet = wp.media.model.Query.get;
-            wp.media.model.Query.get = function(props, options) {
-                if (currentTab !== 'all') {
-                    props.wpmme_media_tab = currentTab;
-                } else {
-                    delete props.wpmme_media_tab;
-                }
-                return originalGet.call(this, props, options);
-            };
         }
     }
 
@@ -190,4 +231,3 @@ jQuery(document).ready(function($) {
         }
     });
 });
-

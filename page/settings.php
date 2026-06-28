@@ -10,7 +10,7 @@ $options = wpmme_get_options();
 </div>
 <div class="wpmme-wrap">
     <div class="wpmme-header">
-        <h1>WPMME Settings <span class="wpmme-version">v<?php echo WPMME_VERSION; ?></span></h1>
+        <h1>WPMME Settings <span class="wpmme-version">v<?php echo WPMME_VERSION; ?></span> <span class="wpmme-build" style="font-size:12px;color:#666;font-weight:normal;">Build <?php echo WPMME_BUILD; ?></span></h1>
     </div>
 
     <form id="wpmme-settings-form">
