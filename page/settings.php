@@ -322,6 +322,19 @@ $options = wpmme_get_options();
             </div>
         </div>
 
+        <div class="wpmme-card">
+            <div class="wpmme-card-header">
+                <div class="wpmme-card-info">
+                    <h3>Clean Up Admin Notices</h3>
+                    <p>Hide all plugin admin notices and nag messages globally, except on the Plugins page.</p>
+                </div>
+                <label class="wpmme-switch">
+                    <input type="checkbox" name="hide_notices" <?php checked($options['hide_notices']); ?>>
+                    <span class="wpmme-slider"></span>
+                </label>
+            </div>
+        </div>
+
         <div class="wpmme-card has-body">
             <div class="wpmme-card-header">
                 <div class="wpmme-card-info">

@@ -33,6 +33,7 @@ require_once WPMME_DIR . 'inc/class-watermark.php';
 require_once WPMME_DIR . 'inc/class-comments.php';
 require_once WPMME_DIR . 'inc/class-login.php';
 require_once WPMME_DIR . 'inc/class-admin-bar.php';
+require_once WPMME_DIR . 'inc/class-admin-notices.php';
 require_once WPMME_DIR . 'inc/class-limit-login.php';
 require_once WPMME_DIR . 'inc/class-media-replace.php';
 require_once WPMME_DIR . 'inc/class-media-tabs.php';
@@ -81,6 +82,10 @@ function wpmme_init() {
     // ASE Enhancements
     if (!empty($options['admin_bar_clean'])) {
         new WPMME_Admin_Bar();
+    }
+    
+    if (!empty($options['hide_notices'])) {
+        new WPMME_Admin_Notices();
     }
     if (!empty($options['limit_login'])) {
         new WPMME_Limit_Login();
@@ -155,6 +160,7 @@ function wpmme_get_default_options() {
         'login_slug_value'     => 'zogin',
         'media_replace'        => true,
         'admin_bar_clean'      => true,
+        'hide_notices'         => true,
         'limit_login'          => true,
         'limit_login_retries'  => 4,
     );
