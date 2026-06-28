@@ -3,6 +3,23 @@ jQuery(document).ready(function($) {
 
     var currentTab = 'all';
 
+    // Intercept all XHR requests to async-upload.php to guarantee wpmme_media_tab is sent
+    var originalOpen = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function(method, url) {
+        this._wpmme_url = url;
+        originalOpen.apply(this, arguments);
+    };
+
+    var originalSend = XMLHttpRequest.prototype.send;
+    XMLHttpRequest.prototype.send = function(data) {
+        if (currentTab !== 'all' && this._wpmme_url && this._wpmme_url.indexOf('async-upload.php') !== -1) {
+            if (data instanceof FormData) {
+                data.append('wpmme_media_tab', currentTab);
+            }
+        }
+        originalSend.call(this, data);
+    };
+
     function renderTabs() {
         var $container = $('<div class="wpmme-media-tabs"></div>');
         
@@ -19,77 +36,18 @@ jQuery(document).ready(function($) {
     function updateQueryAndUploader(tabId) {
         currentTab = tabId;
 
-        // Save active tab to User Meta via AJAX
+        // Save active tab to User Meta via AJAX as backup
         $.post(wpmme_media_tabs_obj.ajaxurl, {
             action: 'wpmme_set_active_tab',
             nonce: wpmme_media_tabs_obj.nonce,
             tab_id: currentTab
         });
 
-        // Update uploader params for known instances
-        if (typeof wp.Uploader !== 'undefined' && wp.Uploader.defaults) {
-            wp.Uploader.defaults.multipart_params.wpmme_media_tab = currentTab;
-        }
-
-        // 4. Update the Backbone collection filter
+        // Update the Backbone collection filter to show only this tab's files
         if (wp.media && wp.media.frame && wp.media.frame.content && wp.media.frame.content.get() && wp.media.frame.content.get().collection) {
             var collection = wp.media.frame.content.get().collection;
             collection.props.set({wpmme_media_tab: currentTab, ignore: (+ new Date())});
         }
-    }
-
-        // 2. Update Media Modal Plupload instance natively
-        if (wp.media && wp.media.frame && wp.media.frame.uploader && wp.media.frame.uploader.uploader && wp.media.frame.uploader.uploader.uploader) {
-            var pluploadInst = wp.media.frame.uploader.uploader.uploader;
-            if (currentTab !== 'all') {
-                pluploadInst.settings.multipart_params.wpmme_media_tab = currentTab;
-            } else {
-                delete pluploadInst.settings.multipart_params.wpmme_media_tab;
-            }
-        }
-        
-        // 3. Update Grid View Plupload instance natively
-        if (typeof uploader !== 'undefined' && uploader.settings) {
-            if (currentTab !== 'all') {
-                uploader.settings.multipart_params.wpmme_media_tab = currentTab;
-            } else {
-                delete uploader.settings.multipart_params.wpmme_media_tab;
-            }
-        }
-
-        // 4. Update the Backbone collection filter
-        if (wp.media && wp.media.frame && wp.media.frame.content && wp.media.frame.content.get() && wp.media.frame.content.get().collection) {
-            var collection = wp.media.frame.content.get().collection;
-            collection.props.set({wpmme_media_tab: currentTab, ignore: (+ new Date())});
-        }
-    }
-
-    // Official WordPress hook for Uploader events (Extending wp.Uploader.prototype)
-    if (typeof wp !== 'undefined' && typeof wp.Uploader !== 'undefined') {
-        var originalSuccess = wp.Uploader.prototype.success;
-
-        _.extend(wp.Uploader.prototype, {
-            success: function(file_attachment) {
-                if (originalSuccess) originalSuccess.apply(this, arguments);
-                
-                // Refresh grid on success
-                if (wp.media && wp.media.frame && wp.media.frame.content && wp.media.frame.content.get() && wp.media.frame.content.get().collection) {
-                    wp.media.frame.content.get().collection.props.set({ignore: (+ new Date())});
-                }
-            }
-        });
-    }
-
-    // Safe Override Attachment creation to guarantee the local model has the taxonomy attribute immediately (fixes placeholder issue)
-    if (typeof wp !== 'undefined' && wp.media && wp.media.model && wp.media.model.Attachment) {
-        var originalCreate = wp.media.model.Attachment.create;
-        wp.media.model.Attachment.create = function(attrs) {
-            // ONLY modify if this is a newly uploading file (has 'file' property from Plupload)
-            if (attrs && attrs.file && currentTab !== 'all') {
-                attrs.wpmme_media_tab = parseInt(currentTab, 10);
-            }
-            return originalCreate.apply(this, arguments);
-        };
     }
 
     // Set default tab on load to clear state
@@ -99,7 +57,32 @@ jQuery(document).ready(function($) {
         tab_id: 'all'
     });
 
-
+    // Hook queue add early to ensure placeholders show up in custom tabs
+    function hookUploaderQueue() {
+        if (typeof wp !== 'undefined' && wp.Uploader && wp.Uploader.queue && !wp.Uploader.queue._wpmme_hooked) {
+            wp.Uploader.queue._wpmme_hooked = true;
+            
+            // Override queue add to inject taxonomy BEFORE Backbone triggers add events
+            var originalAdd = wp.Uploader.queue.add;
+            wp.Uploader.queue.add = function(models, options) {
+                var items = Array.isArray(models) ? models : [models];
+                for (var i = 0; i < items.length; i++) {
+                    if (currentTab !== 'all' && items[i] && typeof items[i].set === 'function') {
+                        items[i].set('wpmme_media_tab', parseInt(currentTab, 10));
+                    }
+                }
+                return originalAdd.apply(this, arguments);
+            };
+        }
+    }
+    
+    // Aggressively attempt to hook the uploader queue since it may initialize late
+    var queueHookInterval = setInterval(function() {
+        if (typeof wp !== 'undefined' && wp.Uploader && wp.Uploader.queue) {
+            hookUploaderQueue();
+            clearInterval(queueHookInterval);
+        }
+    }, 50);
 
     // Modal view injection
     if (wp.media && wp.media.view && wp.media.view.MediaFrame) {
