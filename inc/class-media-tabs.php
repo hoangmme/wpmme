@@ -51,8 +51,8 @@ class WPMME_Media_Tabs {
     }
 
     private function load_assets() {
-        wp_enqueue_style('wpmme-media-tabs-css', WPMME_URL . 'assets/css/media-tabs.css', array(), WPMME_VERSION);
-        wp_enqueue_script('wpmme-media-tabs-js', WPMME_URL . 'assets/js/media-tabs.js', array('jquery', 'media-views', 'media-models'), WPMME_VERSION, true);
+        wp_enqueue_style('wpmme-media-tabs-css', WPMME_URL . 'assets/css/media-tabs.css', array(), time());
+        wp_enqueue_script('wpmme-media-tabs-js', WPMME_URL . 'assets/js/media-tabs.js', array('jquery', 'media-views', 'media-models'), time(), true);
 
         $tabs = get_terms(array(
             'taxonomy' => 'wpmme_media_tab',

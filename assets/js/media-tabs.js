@@ -20,9 +20,24 @@ jQuery(document).ready(function($) {
     function updateQueryAndUploader(tabId) {
         currentTab = tabId;
 
-        // Update uploader params globally
+        // Update uploader params globally for future instances
         if (typeof wp.Uploader !== 'undefined' && wp.Uploader.defaults) {
             wp.Uploader.defaults.multipart_params.wpmme_media_tab = currentTab;
+        }
+
+        // Update all existing Plupload instances attached to wp.media
+        if (wp.media.frame && wp.media.frame.uploader) {
+            var uploaderView = wp.media.frame.uploader.uploader;
+            if (uploaderView && uploaderView.uploader && uploaderView.uploader.settings && uploaderView.uploader.settings.multipart_params) {
+                uploaderView.uploader.settings.multipart_params.wpmme_media_tab = currentTab;
+            }
+        }
+        if (typeof wp.Uploader !== 'undefined' && wp.Uploader.instances) {
+            $.each(wp.Uploader.instances, function(i, instance) {
+                if (instance && instance.uploader && instance.uploader.settings && instance.uploader.settings.multipart_params) {
+                    instance.uploader.settings.multipart_params.wpmme_media_tab = currentTab;
+                }
+            });
         }
 
         // Try to update the current media frame collection
@@ -64,6 +79,13 @@ jQuery(document).ready(function($) {
         var $tabs = renderTabs();
         $('.wrap').find('.wp-header-end').after($tabs);
         
+        // Force show the uploader correctly via WP's own button to ensure Plupload shim is calculated
+        setTimeout(function() {
+            if ($('.page-title-action').length && !$('.uploader-inline').is(':visible')) {
+                $('.page-title-action').first().click();
+            }
+        }, 500);
+
         // Poll for frame ready since it initializes asynchronously
         var gridCheck = setInterval(function() {
             if (wp.media.frame && wp.media.frame.content) {

@@ -87,7 +87,6 @@
 
 /* Adjustments for media modal */
 .media-modal-content .attachments-browser {
-    /* Top offset to accommodate the tabs */
     top: 40px;
 }
 .media-modal-content .wpmme-media-tabs {
@@ -99,10 +98,37 @@
     padding-top: 5px;
     background: #f1f1f1;
     border-bottom: 1px solid #ddd;
-    height: 34px; /* Fixed height for positioning */
+    height: 34px;
 }
 
 /* Specific to grid view */
 .upload-php .attachments-browser {
     margin-top: 15px;
+}
+
+/* Force Uploader Frame to show in Grid and Modal to save 1 click */
+.upload-php .uploader-inline,
+.attachments-browser .uploader-inline {
+    display: block !important;
+}
+
+/* Adjust Modal Uploader appearance so it doesn't block the grid */
+.attachments-browser .uploader-inline {
+    position: relative;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: auto;
+    background: transparent;
+    padding: 10px 0;
+    border-bottom: 1px dashed #ddd;
+    margin-bottom: 15px;
+}
+.attachments-browser .uploader-inline .upload-ui {
+    margin: 0;
+    padding: 10px;
+}
+.attachments-browser .uploader-inline .drop-instructions {
+    display: inline-block;
+    margin-right: 10px;
 }
