@@ -20,25 +20,12 @@ jQuery(document).ready(function($) {
     function updateQueryAndUploader(tabId) {
         currentTab = tabId;
 
-        // Update uploader params globally for future instances
-        if (typeof wp.Uploader !== 'undefined' && wp.Uploader.defaults) {
-            wp.Uploader.defaults.multipart_params.wpmme_media_tab = currentTab;
-        }
-
-        // Update all existing Plupload instances attached to wp.media
-        if (wp.media.frame && wp.media.frame.uploader) {
-            var uploaderView = wp.media.frame.uploader.uploader;
-            if (uploaderView && uploaderView.uploader && uploaderView.uploader.settings && uploaderView.uploader.settings.multipart_params) {
-                uploaderView.uploader.settings.multipart_params.wpmme_media_tab = currentTab;
-            }
-        }
-        if (typeof wp.Uploader !== 'undefined' && wp.Uploader.instances) {
-            $.each(wp.Uploader.instances, function(i, instance) {
-                if (instance && instance.uploader && instance.uploader.settings && instance.uploader.settings.multipart_params) {
-                    instance.uploader.settings.multipart_params.wpmme_media_tab = currentTab;
-                }
-            });
-        }
+        // Save active tab to User Meta via AJAX
+        $.post(wpmme_media_tabs_obj.ajaxurl, {
+            action: 'wpmme_set_active_tab',
+            nonce: wpmme_media_tabs_obj.nonce,
+            tab_id: currentTab
+        });
 
         // Try to update the current media frame collection
         if (wp.media.frame && wp.media.frame.content && wp.media.frame.content.get() && wp.media.frame.content.get().collection) {
@@ -49,6 +36,13 @@ jQuery(document).ready(function($) {
             collection.props.set({wpmme_media_tab: currentTab, ignore: (+ new Date())});
         }
     }
+
+    // Set default tab on load to clear state
+    $.post(wpmme_media_tabs_obj.ajaxurl, {
+        action: 'wpmme_set_active_tab',
+        nonce: wpmme_media_tabs_obj.nonce,
+        tab_id: 'all'
+    });
 
     // Modal view injection
     if (wp.media && wp.media.view && wp.media.view.MediaFrame) {

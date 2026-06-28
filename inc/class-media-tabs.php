@@ -17,6 +17,7 @@ class WPMME_Media_Tabs {
         // Handle AJAX for tabs
         add_action('wp_ajax_wpmme_add_media_tab', array($this, 'ajax_add_tab'));
         add_action('wp_ajax_wpmme_rename_media_tab', array($this, 'ajax_rename_tab'));
+        add_action('wp_ajax_wpmme_set_active_tab', array($this, 'ajax_set_active_tab'));
 
         // Filter attachments for media grid/modal
         add_filter('ajax_query_attachments_args', array($this, 'filter_attachments_by_tab'));
@@ -129,6 +130,16 @@ class WPMME_Media_Tabs {
         wp_send_json_success('Tab renamed successfully.');
     }
 
+    public function ajax_set_active_tab() {
+        check_ajax_referer('wpmme_media_tabs_nonce', 'nonce');
+        if (is_user_logged_in()) {
+            $tab_id = sanitize_text_field($_POST['tab_id']);
+            update_user_meta(get_current_user_id(), 'wpmme_active_media_tab', $tab_id);
+            wp_send_json_success();
+        }
+        wp_send_json_error();
+    }
+
     public function filter_attachments_by_tab($query) {
         if (isset($_REQUEST['query']) && is_array($_REQUEST['query']) && isset($_REQUEST['query']['wpmme_media_tab']) && $_REQUEST['query']['wpmme_media_tab'] !== 'all') {
             $term_id = intval($_REQUEST['query']['wpmme_media_tab']);
@@ -146,8 +157,10 @@ class WPMME_Media_Tabs {
     }
 
     public function assign_tab_on_upload($post_id) {
-        if (isset($_REQUEST['wpmme_media_tab']) && $_REQUEST['wpmme_media_tab'] !== 'all') {
-            $term_id = intval($_REQUEST['wpmme_media_tab']);
+        $tab_id = get_user_meta(get_current_user_id(), 'wpmme_active_media_tab', true);
+        
+        if (!empty($tab_id) && $tab_id !== 'all') {
+            $term_id = intval($tab_id);
             if ($term_id > 0) {
                 wp_set_object_terms($post_id, $term_id, 'wpmme_media_tab', true);
             }
