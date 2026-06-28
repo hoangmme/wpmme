@@ -13,19 +13,38 @@ jQuery(document).ready(function($) {
         });
 
         $container.append('<div class="wpmme-media-tab-add" title="Add New Tab">+</div>');
-
-        // Hook into WP Uploader queue to ensure uploading placeholders show up in the correct tab
-        if (typeof wp !== 'undefined' && wp.Uploader && wp.Uploader.queue && !wp.Uploader.queue._wpmme_hooked) {
-            wp.Uploader.queue._wpmme_hooked = true;
-            wp.Uploader.queue.on('add', function(model) {
-                if (currentTab !== 'all') {
-                    model.set('wpmme_media_tab', parseInt(currentTab, 10));
-                }
-            });
-        }
-
         return $container;
     }
+
+    // Intercept XHR to guarantee wpmme_media_tab is sent on all Plupload uploads to async-upload.php
+    var originalOpen = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function(method, url) {
+        this._wpmme_url = url;
+        originalOpen.apply(this, arguments);
+    };
+
+    var originalSend = XMLHttpRequest.prototype.send;
+    XMLHttpRequest.prototype.send = function(data) {
+        if (currentTab !== 'all' && this._wpmme_url && this._wpmme_url.indexOf('async-upload.php') !== -1) {
+            if (data instanceof FormData) {
+                data.append('wpmme_media_tab', currentTab);
+            }
+        }
+        originalSend.call(this, data);
+    };
+
+    // Override Attachment creation to guarantee the local model has the taxonomy attribute immediately (fixes placeholder issue)
+    if (typeof wp !== 'undefined' && wp.media && wp.media.model && wp.media.model.Attachment) {
+        var originalCreate = wp.media.model.Attachment.create;
+        wp.media.model.Attachment.create = function(attrs) {
+            if (currentTab !== 'all') {
+                attrs.wpmme_media_tab = parseInt(currentTab, 10);
+            }
+            return originalCreate.apply(this, arguments);
+        };
+    }
+
+
 
     function updateQueryAndUploader(tabId) {
         currentTab = tabId;
