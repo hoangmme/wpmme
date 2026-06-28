@@ -16,35 +16,44 @@ jQuery(document).ready(function($) {
         return $container;
     }
 
-    // Intercept XHR to guarantee wpmme_media_tab is sent on all Plupload uploads to async-upload.php
-    var originalOpen = XMLHttpRequest.prototype.open;
-    XMLHttpRequest.prototype.open = function(method, url) {
-        this._wpmme_url = url;
-        originalOpen.apply(this, arguments);
-    };
-
-    var originalSend = XMLHttpRequest.prototype.send;
-    XMLHttpRequest.prototype.send = function(data) {
-        if (currentTab !== 'all' && this._wpmme_url && this._wpmme_url.indexOf('async-upload.php') !== -1) {
-            if (data instanceof FormData) {
-                data.append('wpmme_media_tab', currentTab);
+    // Hook into wp.Uploader (Plupload wrapper in WP) to manage uploads natively
+    if (typeof wp !== 'undefined' && typeof wp.Uploader !== 'undefined') {
+        var originalUploaderInit = wp.Uploader.prototype.init;
+        wp.Uploader.prototype.init = function() {
+            if (originalUploaderInit) {
+                originalUploaderInit.apply(this, arguments);
             }
-        }
-        originalSend.call(this, data);
-    };
 
-    // Override Attachment creation to guarantee the local model has the taxonomy attribute immediately (fixes placeholder issue)
-    if (typeof wp !== 'undefined' && wp.media && wp.media.model && wp.media.model.Attachment) {
-        var originalCreate = wp.media.model.Attachment.create;
-        wp.media.model.Attachment.create = function(attrs) {
-            if (currentTab !== 'all') {
-                attrs.wpmme_media_tab = parseInt(currentTab, 10);
-            }
-            return originalCreate.apply(this, arguments);
+            var self = this;
+            
+            // 1. Ensure multipart_params is sent during upload
+            this.uploader.bind('BeforeUpload', function(up, file) {
+                if (currentTab !== 'all') {
+                    up.settings.multipart_params.wpmme_media_tab = currentTab;
+                }
+            });
+
+            // 2. Ensure placeholder shows up by adding taxonomy to local model
+            this.uploader.bind('FilesAdded', function(up, files) {
+                if (currentTab !== 'all' && wp.Uploader.queue) {
+                    _.each(files, function(file) {
+                        var model = wp.Uploader.queue.get(file.id);
+                        if (model) {
+                            model.set('wpmme_media_tab', parseInt(currentTab, 10));
+                        }
+                    });
+                }
+            });
+
+            // 3. Force refresh grid on upload success to guarantee the new image shows
+            this.uploader.bind('FileUploaded', function(up, file, response) {
+                if (wp.media.frame && wp.media.frame.content && wp.media.frame.content.get() && wp.media.frame.content.get().collection) {
+                    var collection = wp.media.frame.content.get().collection;
+                    collection.props.set({ignore: (+ new Date())});
+                }
+            });
         };
     }
-
-
 
     function updateQueryAndUploader(tabId) {
         currentTab = tabId;

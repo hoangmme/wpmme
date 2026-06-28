@@ -167,7 +167,7 @@ class WPMME_Media_Tabs {
     }
 
     public function assign_tab_on_upload($post_id) {
-        $tab_id = get_user_meta(get_current_user_id(), 'wpmme_active_media_tab', true);
+        $tab_id = isset($_REQUEST['wpmme_media_tab']) ? $_REQUEST['wpmme_media_tab'] : get_user_meta(get_current_user_id(), 'wpmme_active_media_tab', true);
         
         if (!empty($tab_id) && $tab_id !== 'all') {
             $term_id = intval($tab_id);
