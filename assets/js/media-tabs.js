@@ -14,6 +14,16 @@ jQuery(document).ready(function($) {
 
         $container.append('<div class="wpmme-media-tab-add" title="Add New Tab">+</div>');
 
+        // Hook into WP Uploader queue to ensure uploading placeholders show up in the correct tab
+        if (typeof wp !== 'undefined' && wp.Uploader && wp.Uploader.queue && !wp.Uploader.queue._wpmme_hooked) {
+            wp.Uploader.queue._wpmme_hooked = true;
+            wp.Uploader.queue.on('add', function(model) {
+                if (currentTab !== 'all') {
+                    model.set('wpmme_media_tab', parseInt(currentTab, 10));
+                }
+            });
+        }
+
         return $container;
     }
 

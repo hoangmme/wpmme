@@ -21,6 +21,7 @@ class WPMME_Media_Tabs {
 
         // Filter attachments for media grid/modal
         add_filter('ajax_query_attachments_args', array($this, 'filter_attachments_by_tab'));
+        add_filter('wp_prepare_attachment_for_js', array($this, 'prepare_attachment_for_js'), 10, 2);
         
         // Intercept uploads to assign them to the current tab
         add_action('add_attachment', array($this, 'assign_tab_on_upload'));
@@ -154,6 +155,15 @@ class WPMME_Media_Tabs {
             }
         }
         return $query;
+    }
+
+    public function prepare_attachment_for_js($response, $attachment) {
+        $terms = wp_get_object_terms($attachment->ID, 'wpmme_media_tab', array('fields' => 'ids'));
+        if (!empty($terms) && !is_wp_error($terms)) {
+            // WordPress collections filter on exact match if we use props.set({wpmme_media_tab: ID})
+            $response['wpmme_media_tab'] = $terms[0];
+        }
+        return $response;
     }
 
     public function assign_tab_on_upload($post_id) {
