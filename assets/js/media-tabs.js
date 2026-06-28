@@ -72,19 +72,17 @@ jQuery(document).ready(function($) {
         originalOpen.apply(this, arguments);
     };
 
-    // Override wp.Uploader.prototype to refresh collection upon upload success
-    if (typeof wp !== 'undefined' && wp.Uploader) {
-        var originalSuccess = wp.Uploader.prototype.success;
-        wp.Uploader.prototype.success = function(message) {
-            if (originalSuccess) {
-                originalSuccess.apply(this, arguments);
-            }
+    // Override Attachment initialization to inject currentTab into newly created client-side models (e.g. uploads)
+    if (typeof wp !== 'undefined' && wp.media && wp.media.model && wp.media.model.Attachment) {
+        var originalAttachmentInit = wp.media.model.Attachment.prototype.initialize;
+        wp.media.model.Attachment.prototype.initialize = function() {
             if (currentTab !== 'all') {
-                setTimeout(function() {
-                    if (wp.media && wp.media.frame && wp.media.frame.content && wp.media.frame.content.get() && wp.media.frame.content.get().collection) {
-                        wp.media.frame.content.get().collection.props.set({ ignore: +new Date() });
-                    }
-                }, 500);
+                this.set('wpmme_media_tab', parseInt(currentTab, 10));
+            }
+            if (originalAttachmentInit) {
+                originalAttachmentInit.apply(this, arguments);
+            } else {
+                Backbone.Model.prototype.initialize.apply(this, arguments);
             }
         };
     }
@@ -192,23 +190,4 @@ jQuery(document).ready(function($) {
         }
     });
 });
-// Patch the validator to ignore wpmme_media_tab
-var oldGet = wp.media.model.Query.get;
-wp.media.model.Query.get = function(props, options) {
-    var query = oldGet.apply(this, arguments);
-    if (!query._wpmme_patched_validator) {
-        var oldValidator = query.validator;
-        query.validator = function(attachment) {
-            var oldArgs = this.args;
-            var tabArg = oldArgs['wpmme_media_tab'];
-            delete oldArgs['wpmme_media_tab'];
-            var passed = oldValidator.call(this, attachment);
-            if (tabArg !== undefined) {
-                oldArgs['wpmme_media_tab'] = tabArg;
-            }
-            return passed;
-        };
-        query._wpmme_patched_validator = true;
-    }
-    return query;
-};
+
