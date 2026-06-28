@@ -130,7 +130,7 @@ class WPMME_Media_Tabs {
     }
 
     public function filter_attachments_by_tab($query) {
-        if (isset($_REQUEST['query']['wpmme_media_tab']) && $_REQUEST['query']['wpmme_media_tab'] !== 'all') {
+        if (isset($_REQUEST['query']) && is_array($_REQUEST['query']) && isset($_REQUEST['query']['wpmme_media_tab']) && $_REQUEST['query']['wpmme_media_tab'] !== 'all') {
             $term_id = intval($_REQUEST['query']['wpmme_media_tab']);
             if ($term_id > 0) {
                 $query['tax_query'] = array(

@@ -36,12 +36,17 @@ jQuery(document).ready(function($) {
     }
 
     // Modal view injection
-    if (wp.media.view.MediaFrame) {
+    if (wp.media && wp.media.view && wp.media.view.MediaFrame) {
         var originalInit = wp.media.view.MediaFrame.prototype.initialize;
         wp.media.view.MediaFrame.prototype.initialize = function() {
-            originalInit.apply(this, arguments);
+            if (originalInit) {
+                originalInit.apply(this, arguments);
+            }
             
             this.on('ready', function() {
+                // Do not inject in modal view if we are on upload.php grid mode
+                if ($('body').hasClass('upload-php')) return;
+
                 var frame = this;
                 var $tabs = renderTabs();
                 

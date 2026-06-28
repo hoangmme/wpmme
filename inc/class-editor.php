@@ -30,7 +30,7 @@ class WPMME_Editor {
         if (!empty($mce_css)) {
             $mce_css .= ',';
         }
-        $mce_css .= WPMME_URL . 'assets/css/editor-style.css';
+        $mce_css .= WPMME_URL . 'assets/css/editor-style.css?v=' . time();
         return $mce_css;
     }
 
