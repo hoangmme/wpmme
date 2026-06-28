@@ -38,29 +38,47 @@ jQuery(document).ready(function($) {
         }
     }
 
-    // Bulletproof Plupload interceptor
-    if (typeof plupload !== 'undefined' && plupload.Uploader) {
-        var originalPluploadInit = plupload.Uploader.prototype.init;
-        plupload.Uploader.prototype.init = function() {
-            if (originalPluploadInit) {
-                originalPluploadInit.apply(this, arguments);
-            }
-            
-            this.bind('BeforeUpload', function(up, file) {
-                if (currentTab !== 'all') {
-                    up.settings.multipart_params.wpmme_media_tab = currentTab;
-                } else {
-                    delete up.settings.multipart_params.wpmme_media_tab;
-                }
-            });
+    // Official WordPress hook for Uploader events (Extending wp.Uploader.prototype)
+    if (typeof wp !== 'undefined' && typeof wp.Uploader !== 'undefined') {
+        var originalInit = wp.Uploader.prototype.init;
+        var originalAdded = wp.Uploader.prototype.added;
+        var originalSuccess = wp.Uploader.prototype.success;
 
-            this.bind('FileUploaded', function(up, file, response) {
+        _.extend(wp.Uploader.prototype, {
+            init: function() {
+                if (originalInit) originalInit.apply(this, arguments);
+                
+                // Inject params into the uploader instance natively
+                if (this.uploader && typeof this.uploader.bind !== 'undefined') {
+                    this.uploader.bind('BeforeUpload', function(up, file) {
+                        if (currentTab !== 'all') {
+                            up.settings.multipart_params.wpmme_media_tab = currentTab;
+                        }
+                    });
+                }
+            },
+            added: function(files) {
+                if (originalAdded) originalAdded.apply(this, arguments);
+                
+                // Ensure placeholder shows in correct tab
+                if (currentTab !== 'all' && wp.Uploader.queue) {
+                    _.each(files, function(file) {
+                        var model = wp.Uploader.queue.get(file.id);
+                        if (model) {
+                            model.set('wpmme_media_tab', parseInt(currentTab, 10));
+                        }
+                    });
+                }
+            },
+            success: function(file_attachment) {
+                if (originalSuccess) originalSuccess.apply(this, arguments);
+                
                 // Refresh grid on success
                 if (wp.media && wp.media.frame && wp.media.frame.content && wp.media.frame.content.get() && wp.media.frame.content.get().collection) {
                     wp.media.frame.content.get().collection.props.set({ignore: (+ new Date())});
                 }
-            });
-        };
+            }
+        });
     }
 
     // Set default tab on load to clear state
@@ -70,25 +88,7 @@ jQuery(document).ready(function($) {
         tab_id: 'all'
     });
 
-    // Hook queue add early to ensure placeholders show up in custom tabs
-    function hookUploaderQueue() {
-        if (typeof wp !== 'undefined' && wp.Uploader && wp.Uploader.queue && !wp.Uploader.queue._wpmme_hooked) {
-            wp.Uploader.queue._wpmme_hooked = true;
-            wp.Uploader.queue.on('add', function(model) {
-                if (currentTab !== 'all') {
-                    model.set('wpmme_media_tab', parseInt(currentTab, 10));
-                }
-            });
-        }
-    }
-    
-    // Aggressively attempt to hook the uploader queue since it may initialize late
-    var queueHookInterval = setInterval(function() {
-        if (typeof wp !== 'undefined' && wp.Uploader && wp.Uploader.queue) {
-            hookUploaderQueue();
-            clearInterval(queueHookInterval);
-        }
-    }, 50);
+
 
     // Modal view injection
     if (wp.media && wp.media.view && wp.media.view.MediaFrame) {
@@ -99,8 +99,6 @@ jQuery(document).ready(function($) {
             }
             
             this.on('ready', function() {
-                hookUploaderQueue();
-
                 if ($('body').hasClass('upload-php')) return;
 
                 var frame = this;
@@ -122,13 +120,6 @@ jQuery(document).ready(function($) {
                 $('.page-title-action').first().click();
             }
         }, 500);
-
-        var gridCheck = setInterval(function() {
-            if (wp.media.frame && wp.media.frame.content) {
-                hookUploaderQueue();
-                clearInterval(gridCheck);
-            }
-        }, 100);
     }
 
     // Tab clicks
