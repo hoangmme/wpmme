@@ -63,7 +63,7 @@ class WPMME_Login {
             $request_path = trim(str_replace(home_url('', 'relative'), '', $request_path), '/');
 
             if ($request_path === $slug) {
-                global $pagenow;
+                global $pagenow, $error, $user_login, $action, $errors, $interim_login, $customize_login, $redirect_to, $secure_cookie, $reauth, $message, $wp_error;
                 $pagenow = 'wp-login.php';
                 $_SERVER['REQUEST_URI'] = str_replace('/' . $slug, '/wp-login.php', $_SERVER['REQUEST_URI']);
                 
