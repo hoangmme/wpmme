@@ -1,0 +1,108 @@
+.wpmme-media-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    background: #f1f1f1;
+    border-bottom: 1px solid #ccd0d4;
+    padding: 10px 10px 0;
+    margin-bottom: 10px;
+    z-index: 100;
+    position: relative;
+}
+
+.upload-php .wpmme-media-tabs {
+    margin-top: 15px;
+    margin-bottom: 15px;
+    background: transparent;
+    border-bottom: 1px solid #ccd0d4;
+    padding: 0;
+}
+
+.wpmme-media-tab {
+    background: #e5e5e5;
+    border: 1px solid #ccd0d4;
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    padding: 8px 15px;
+    margin-right: 5px;
+    cursor: pointer;
+    font-weight: 500;
+    color: #555;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s;
+}
+
+.wpmme-media-tab:hover {
+    background: #fff;
+    color: #000;
+}
+
+.wpmme-media-tab.active {
+    background: #fff;
+    color: #000;
+    margin-bottom: -1px;
+    border-bottom: 1px solid #fff;
+    font-weight: 600;
+}
+
+.wpmme-media-tab-add {
+    background: transparent;
+    border: 1px dashed #ccd0d4;
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    color: #888;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wpmme-media-tab-add:hover {
+    background: #f1f1f1;
+    color: #2271b1;
+    border-color: #2271b1;
+}
+
+.tab-rename {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    line-height: 14px;
+    margin-left: 8px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    color: #888;
+}
+
+.wpmme-media-tab:hover .tab-rename {
+    opacity: 1;
+}
+
+.tab-rename:hover {
+    color: #2271b1;
+}
+
+/* Adjustments for media modal */
+.media-modal-content .attachments-browser {
+    /* Top offset to accommodate the tabs */
+    top: 40px;
+}
+.media-modal-content .wpmme-media-tabs {
+    margin-bottom: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding-top: 5px;
+    background: #f1f1f1;
+    border-bottom: 1px solid #ddd;
+    height: 34px; /* Fixed height for positioning */
+}
+
+/* Specific to grid view */
+.upload-php .attachments-browser {
+    margin-top: 15px;
+}

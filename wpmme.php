@@ -35,6 +35,7 @@ require_once WPMME_DIR . 'inc/class-login.php';
 require_once WPMME_DIR . 'inc/class-admin-bar.php';
 require_once WPMME_DIR . 'inc/class-limit-login.php';
 require_once WPMME_DIR . 'inc/class-media-replace.php';
+require_once WPMME_DIR . 'inc/class-media-tabs.php';
 require_once WPMME_DIR . 'inc/class-updater.php';
 require_once WPMME_DIR . 'inc/class-deploy.php';
 
@@ -88,6 +89,10 @@ function wpmme_init() {
         new WPMME_Media_Replace();
     }
     
+    if (!empty($options['media_tabs'])) {
+        new WPMME_Media_Tabs();
+    }
+    
     new WPMME_Updater();
     new WPMME_Deploy();
 }
@@ -133,7 +138,13 @@ function wpmme_get_default_options() {
         'watermark_size'       => 30,
         'watermark_margin'     => 10,
         'watermark_opacity'    => 80,
+        
+        // Media Tabs
+        'media_tabs'           => true,
+
+        // Security
         'disable_xmlrpc'       => true,
+        'limit_login_retries'  => 4,     
         'remove_version'       => true,
         'disable_rest_users'   => true,
         'disable_author'       => true,

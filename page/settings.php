@@ -49,6 +49,19 @@ $options = wpmme_get_options();
         <div class="wpmme-card">
             <div class="wpmme-card-header">
                 <div class="wpmme-card-info">
+                    <h3>Media Tabs (Chrome-style)</h3>
+                    <p>Organize the Media Library into tabs. Default tab shows all images, custom tabs isolate their uploads.</p>
+                </div>
+                <label class="wpmme-switch">
+                    <input type="checkbox" name="media_tabs" <?php checked($options['media_tabs']); ?>>
+                    <span class="wpmme-slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="wpmme-card">
+            <div class="wpmme-card-header">
+                <div class="wpmme-card-info">
                     <h3>Media Replacement</h3>
                     <p>Add a button to replace existing media files with new ones while keeping the same URL.</p>
                 </div>

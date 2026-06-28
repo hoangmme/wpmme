@@ -1,0 +1,128 @@
+jQuery(document).ready(function($) {
+    if (typeof wp === 'undefined' || !wp.media) return;
+
+    var currentTab = 'all';
+
+    function renderTabs() {
+        var $container = $('<div class="wpmme-media-tabs"></div>');
+        
+        $container.append('<div class="wpmme-media-tab active" data-id="all">All</div>');
+        
+        $.each(wpmme_media_tabs_obj.tabs, function(i, tab) {
+            $container.append('<div class="wpmme-media-tab" data-id="'+tab.term_id+'"><span class="tab-name">'+tab.name+'</span><span class="tab-rename dashicons dashicons-edit" title="Rename"></span></div>');
+        });
+
+        $container.append('<div class="wpmme-media-tab-add" title="Add New Tab">+</div>');
+
+        return $container;
+    }
+
+    function updateQueryAndUploader(tabId) {
+        currentTab = tabId;
+
+        // Update uploader params globally
+        if (typeof wp.Uploader !== 'undefined' && wp.Uploader.defaults) {
+            wp.Uploader.defaults.multipart_params.wpmme_media_tab = currentTab;
+        }
+
+        // Try to update the current media frame collection
+        if (wp.media.frame && wp.media.frame.content && wp.media.frame.content.get() && wp.media.frame.content.get().collection) {
+            var collection = wp.media.frame.content.get().collection;
+            
+            // To force a refresh, we need to set the property. 
+            // Backbone will only re-fetch if a property changes.
+            collection.props.set({wpmme_media_tab: currentTab, ignore: (+ new Date())});
+        }
+    }
+
+    // Modal view injection
+    if (wp.media.view.MediaFrame) {
+        var originalInit = wp.media.view.MediaFrame.prototype.initialize;
+        wp.media.view.MediaFrame.prototype.initialize = function() {
+            originalInit.apply(this, arguments);
+            
+            this.on('ready', function() {
+                var frame = this;
+                var $tabs = renderTabs();
+                
+                // Prepend tabs to the content area
+                frame.$el.find('.media-frame-content').prepend($tabs);
+
+                // Need to adjust top positioning for views because we injected tabs
+                frame.$el.find('.media-frame-content > .attachments-browser').css('top', '40px');
+            });
+        };
+    }
+
+    // Grid View injection (upload.php)
+    if ($('body').hasClass('upload-php') && $('.wrap').length) {
+        var $tabs = renderTabs();
+        $('.wrap').find('.wp-header-end').after($tabs);
+        
+        // Poll for frame ready since it initializes asynchronously
+        var gridCheck = setInterval(function() {
+            if (wp.media.frame && wp.media.frame.content) {
+                clearInterval(gridCheck);
+            }
+        }, 100);
+    }
+
+    // Event Listeners (Delegated so it works for both Modal and Grid)
+    $(document).on('click', '.wpmme-media-tab', function() {
+        var $tab = $(this);
+        var tabId = $tab.data('id');
+        
+        // Update active class
+        $('.wpmme-media-tab').removeClass('active');
+        // Select all instances (modal and grid could theoretically both exist)
+        $('.wpmme-media-tab[data-id="'+tabId+'"]').addClass('active');
+
+        updateQueryAndUploader(tabId);
+    });
+
+    $(document).on('click', '.wpmme-media-tab-add', function() {
+        var name = prompt("Enter new tab name:");
+        if (name) {
+            $.post(wpmme_media_tabs_obj.ajaxurl, {
+                action: 'wpmme_add_media_tab',
+                nonce: wpmme_media_tabs_obj.nonce,
+                tab_name: name
+            }, function(res) {
+                if (res.success) {
+                    wpmme_media_tabs_obj.tabs.push(res.data);
+                    var $newTab = $('<div class="wpmme-media-tab" data-id="'+res.data.term_id+'"><span class="tab-name">'+res.data.name+'</span><span class="tab-rename dashicons dashicons-edit" title="Rename"></span></div>');
+                    $newTab.insertBefore($('.wpmme-media-tab-add'));
+                } else {
+                    alert(res.data);
+                }
+            });
+        }
+    });
+
+    $(document).on('click', '.tab-rename', function(e) {
+        e.stopPropagation();
+        var $tab = $(this).parent();
+        var id = $tab.data('id');
+        var oldName = $tab.find('.tab-name').text();
+        var newName = prompt("Rename tab:", oldName);
+        
+        if (newName && newName !== oldName) {
+            $.post(wpmme_media_tabs_obj.ajaxurl, {
+                action: 'wpmme_rename_media_tab',
+                nonce: wpmme_media_tabs_obj.nonce,
+                term_id: id,
+                new_name: newName
+            }, function(res) {
+                if (res.success) {
+                    $('.wpmme-media-tab[data-id="'+id+'"]').find('.tab-name').text(newName);
+                    $.each(wpmme_media_tabs_obj.tabs, function(i, t) {
+                        if (t.term_id == id) t.name = newName;
+                    });
+                } else {
+                    alert(res.data);
+                }
+            });
+        }
+    });
+
+});
