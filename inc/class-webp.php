@@ -9,15 +9,20 @@ class WPMME_WebP {
     public function __construct($options) {
         $this->options = $options;
         add_filter('wp_handle_upload', array($this, 'convert_to_webp'));
+        add_filter('wp_handle_sideload', array($this, 'convert_to_webp'));
         add_action('wp_ajax_wpmme_webp_all', array($this, 'ajax_webp_all'));
     }
 
     public function convert_to_webp($upload) {
-        if (!function_exists('imagewebp')) {
+        if (!function_exists('imagewebp') || !empty($upload['error']) || empty($upload['file'])) {
             return $upload;
         }
 
-        $type = $upload['type'];
+        $type = isset($upload['type']) ? $upload['type'] : '';
+        if (empty($type)) {
+            $filetype = wp_check_filetype($upload['file']);
+            $type = $filetype['type'];
+        }
         if (!in_array($type, array('image/jpeg', 'image/png'))) {
             return $upload;
         }

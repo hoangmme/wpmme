@@ -54,8 +54,11 @@ class WPMME_Auto_Upload {
             $upload = wp_upload_bits($filename, null, $image_data);
             if (!empty($upload['error'])) continue;
 
+            $upload['type'] = $content_type ?: mime_content_type($upload['file']);
+            $upload = apply_filters('wp_handle_upload', $upload);
+
             $attachment = array(
-                'post_mime_type' => $content_type ?: mime_content_type($upload['file']),
+                'post_mime_type' => !empty($upload['type']) ? $upload['type'] : mime_content_type($upload['file']),
                 'post_title'     => pathinfo($filename, PATHINFO_FILENAME),
                 'post_content'   => '',
                 'post_status'    => 'inherit',
