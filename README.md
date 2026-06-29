@@ -1,8 +1,8 @@
-# WPMME
+# MMe Core
 
 **All-in-One Optimization & Security plugin by MMe.**
 
-WPMME is a comprehensive WordPress plugin that combines essential optimization, security, and media management features into a single, lightweight, and easy-to-use package.
+MMe Core is a comprehensive WordPress plugin that combines essential optimization, security, and media management features into a single, lightweight, and easy-to-use package.
 
 ## Features
 
@@ -33,11 +33,11 @@ WPMME is a comprehensive WordPress plugin that combines essential optimization, 
 1. Download the latest `.zip` file from the [Releases](https://github.com/hoangmme/wpmme) or the `main` branch.
 2. Go to **Plugins > Add New > Upload Plugin** in your WordPress dashboard.
 3. Upload the `.zip` file and click **Install Now**, then **Activate**.
-4. Go to **WPMME Settings** in the admin menu to configure the features.
+4. Go to **MMe Core Settings** in the admin menu to configure the features.
 
 ## Updating
 
-You don't need to manually download new versions from GitHub. WPMME includes a built-in updater:
-1. Go to the **WPMME Settings** page.
+You don't need to manually download new versions from GitHub. MMe Core includes a built-in updater:
+1. Go to the **MMe Core Settings** page.
 2. Scroll to the bottom and click **Pull Latest from GitHub**.
 3. The plugin will automatically download the latest version from the `main` branch, extract it, and update itself seamlessly.

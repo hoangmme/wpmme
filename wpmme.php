@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: WPMME
+ * Plugin Name: MMe Core
  * Plugin URI: https://mme.vn
  * Description: All-in-One Optimization & Security plugin by MMe.
  * Version: 1.0.0 (Build 20260628.1505)
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
 }
 
 define('WPMME_VERSION', '1.0.0');
-define('WPMME_BUILD', '20260629.2326');
+define('WPMME_BUILD', '20260630.0235');
 define('WPMME_DIR', plugin_dir_path(__FILE__));
 define('WPMME_URL', plugin_dir_url(__FILE__));
 
@@ -171,8 +171,8 @@ function wpmme_get_default_options() {
 add_action('admin_menu', 'wpmme_admin_menu');
 function wpmme_admin_menu() {
     add_menu_page(
-        'WPMME Settings',
-        'WPMME',
+        'MMe Core Settings',
+        'MMe Core',
         'manage_options',
         'wpmme-settings',
         'wpmme_settings_page',
