@@ -97,7 +97,12 @@ class WPMME_Login {
                 $wp_query->set_404();
                 status_header(404);
                 nocache_headers();
-                include(get_query_template('404'));
+                $template = get_query_template('404');
+                if (!empty($template) && file_exists($template)) {
+                    include($template);
+                } else {
+                    wp_die(__('404 Not Found'), __('Page not found'), array('response' => 404));
+                }
                 exit;
             }
 
@@ -112,7 +117,12 @@ class WPMME_Login {
                 $wp_query->set_404();
                 status_header(404);
                 nocache_headers();
-                include(get_query_template('404'));
+                $template = get_query_template('404');
+                if (!empty($template) && file_exists($template)) {
+                    include($template);
+                } else {
+                    wp_die(__('404 Not Found'), __('Page not found'), array('response' => 404));
+                }
                 exit;
             }
         });
