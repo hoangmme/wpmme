@@ -1,5 +1,6 @@
 jQuery(document).ready(function($) {
     if (typeof wpmme_media_tabs_obj === 'undefined') return;
+    if (!$('body').hasClass('upload-php')) return;
 
     var currentTab = wpmme_media_tabs_obj.active_tab || 'all';
     
@@ -31,10 +32,6 @@ jQuery(document).ready(function($) {
         // For Media Grid
         if ($('.media-toolbar').length) {
             $tabsContainer.insertBefore('.media-toolbar');
-        } 
-        // For Media Modal
-        else if ($('.media-frame-content').length) {
-            $tabsContainer.prependTo('.media-frame-content');
         }
     }
 
@@ -48,12 +45,7 @@ jQuery(document).ready(function($) {
         observer.observe(document.body, { childList: true, subtree: true });
     }
 
-    // Modal View injection (post.php, etc.)
-    if (typeof wp !== 'undefined' && wp.media) {
-        wp.media.view.Modal.prototype.on('open', function() {
-            setTimeout(injectTabs, 100);
-        });
-    }
+
 
     // Intercept XHR to append wpmme_media_tab to all Plupload requests
     var originalSend = XMLHttpRequest.prototype.send;

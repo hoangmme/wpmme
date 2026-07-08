@@ -8,11 +8,8 @@ class WPMME_Media_Tabs {
         // Register taxonomy
         add_action('init', array($this, 'register_taxonomy'));
 
-        // Enqueue scripts and styles
+        // Enqueue scripts and styles only on Media Library screen (upload.php)
         add_action('admin_enqueue_scripts', array($this, 'enqueue_assets'));
-        
-        // Ensure scripts are loaded in media modal when enqueued on post edit screen
-        add_action('wp_enqueue_media', array($this, 'enqueue_assets_for_modal'));
 
         // Handle AJAX for tabs
         add_action('wp_ajax_wpmme_add_media_tab', array($this, 'ajax_add_tab'));
@@ -46,10 +43,6 @@ class WPMME_Media_Tabs {
         if ($hook === 'upload.php') {
             $this->load_assets();
         }
-    }
-
-    public function enqueue_assets_for_modal() {
-        $this->load_assets();
     }
 
     private function load_assets() {
@@ -175,7 +168,7 @@ class WPMME_Media_Tabs {
     }
 
     public function assign_tab_on_upload($post_id) {
-        $tab_id = isset($_REQUEST['wpmme_media_tab']) ? $_REQUEST['wpmme_media_tab'] : get_user_meta(get_current_user_id(), 'wpmme_active_media_tab', true);
+        $tab_id = isset($_REQUEST['wpmme_media_tab']) ? sanitize_text_field($_REQUEST['wpmme_media_tab']) : '';
         
         if (!empty($tab_id) && $tab_id !== 'all') {
             $term_id = intval($tab_id);

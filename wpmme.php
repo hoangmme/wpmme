@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
 }
 
 define('WPMME_VERSION', '1.0.0');
-define('WPMME_BUILD', '20260630.0235');
+define('WPMME_BUILD', '20260708.1750');
 define('WPMME_DIR', plugin_dir_path(__FILE__));
 define('WPMME_URL', plugin_dir_url(__FILE__));
 
@@ -135,7 +135,7 @@ function wpmme_get_default_options() {
         'image_seo'            => false,
         'auto_upload'          => true,
         'imgattr'              => true,
-        'rename'               => true,
+        'rename'               => false,
         'rename_pattern'       => '{domain}-{date}-{random}',
         'webp'                 => true,
         'webp_quality'         => 82,
