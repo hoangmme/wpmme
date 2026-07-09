@@ -83,7 +83,7 @@ class WPMME_Auto_Upload {
             remove_action('save_post', array($this, 'process_post'));
             wp_update_post(array(
                 'ID'           => $post_id,
-                'post_content' => $content,
+                'post_content' => wp_slash($content),
             ));
             add_action('save_post', array($this, 'process_post'), 10, 2);
         }
