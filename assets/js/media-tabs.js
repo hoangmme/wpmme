@@ -34,42 +34,36 @@ jQuery(document).ready(function($) {
         }
     }
 
-    // Grid View injection (upload.php)
-    if ($('body').hasClass('upload-php') && $('.wrap').length) {
-        var observer = new MutationObserver(function(mutations) {
+    // Global Observer for both Grid View (tabs) and Modal View (dropdown)
+    var observer = new MutationObserver(function(mutations) {
+        // Grid View injection
+        if ($('body').hasClass('upload-php') && $('.wrap').length) {
             if ($('.media-toolbar').length && !$('.wpmme-media-tabs').length) {
                 injectTabs();
             }
-        });
-        observer.observe(document.body, { childList: true, subtree: true });
-    }
+        }
 
-    // Modal View injection (post.php, Elementor, etc.) - Dropdown next to date filter
-    if (typeof wp !== 'undefined' && wp.media) {
-        wp.media.view.Modal.prototype.on('open', function() {
-            setTimeout(function() {
-                if ($('#wpmme-media-tab-filter').length) return;
-                
-                // Find the secondary toolbar (where the date filter is)
-                var $toolbar = $('.media-frame-content .media-toolbar-secondary');
-                if (!$toolbar.length) return;
+        // Modal View injection (Dropdown next to date filter)
+        var $secondaryToolbar = $('.media-frame-content .media-toolbar-secondary');
+        if ($secondaryToolbar.length && !$('#wpmme-media-tab-filter').length) {
+            var $select = $('<select id="wpmme-media-tab-filter" class="attachment-filters" style="max-width:150px; margin-left:10px;"></select>');
+            $select.append($('<option value="all">All Tabs</option>'));
+            $.each(wpmme_media_tabs_obj.tabs, function(index, tab) {
+                $select.append($('<option value="' + tab.term_id + '">' + tab.name + '</option>'));
+            });
+            
+            $select.val(currentTab);
+            
+            $select.on('change', function() {
+                updateQueryAndUploader($(this).val());
+            });
 
-                var $select = $('<select id="wpmme-media-tab-filter" class="attachment-filters" style="max-width:150px; margin-left:10px;"></select>');
-                $select.append($('<option value="all">All Tabs</option>'));
-                $.each(wpmme_media_tabs_obj.tabs, function(index, tab) {
-                    $select.append($('<option value="' + tab.term_id + '">' + tab.name + '</option>'));
-                });
-                
-                $select.val(currentTab);
-                
-                $select.on('change', function() {
-                    updateQueryAndUploader($(this).val());
-                });
+            $secondaryToolbar.append($select);
+        }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
 
-                $toolbar.append($select);
-            }, 100);
-        });
-    }    // Intercept XHR to append wpmme_media_tab to all Plupload requests
+    // Intercept XHR to append wpmme_media_tab to all Plupload requests
     var originalSend = XMLHttpRequest.prototype.send;
     XMLHttpRequest.prototype.send = function(data) {
         if (currentTab !== 'all' && this._wpmme_url && this._wpmme_url.indexOf('async-upload.php') !== -1) {
