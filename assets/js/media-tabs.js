@@ -50,7 +50,9 @@ jQuery(document).ready(function($) {
         
         if ($modalTopToolbar.length && !$modalTopToolbar.find('#wpmme-media-tab-filter').length) {
             var $wrapper = $('<div class="wpmme-media-tab-filter-wrapper" style="float: left; margin-left: 15px;"></div>');
-            $wrapper.append('<h2 class="media-attachments-filter-heading" style="margin: 0 0 5px 0; font-size: 13px; font-weight: 600; color: #50575e;">Filter by Tab</h2>');
+            
+            // Use a generic div instead of h2.media-attachments-filter-heading to avoid WP's absolute positioning which causes overlaps
+            $wrapper.append('<div style="margin: 0 0 4px 0; font-size: 13px; font-weight: 600; color: #50575e;">Filter by Tab</div>');
             
             var $select = $('<select id="wpmme-media-tab-filter" class="attachment-filters" style="display: inline-block !important; width: auto !important; max-width: 150px; margin: 0;"></select>');
             $select.append($('<option value="all">All Tabs</option>'));
