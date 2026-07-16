@@ -44,17 +44,14 @@ jQuery(document).ready(function($) {
             injectTabs();
         }
 
-        // 2. Modal View Injection (Dropdown floating in the middle)
-        // We target the main toolbar and insert after secondary to bypass 33% width limit, and avoid primary label collision
+        // 2. Modal View Injection (Dropdown natively inside secondary toolbar)
+        // We target the main toolbar's secondary section (where native filters live)
         var $modalTopToolbar = $('.media-modal .attachments-browser > .media-toolbar');
+        var $secondaryToolbar = $modalTopToolbar.find('.media-toolbar-secondary');
         
-        if ($modalTopToolbar.length && !$modalTopToolbar.find('#wpmme-media-tab-filter').length) {
-            var $wrapper = $('<div class="wpmme-media-tab-filter-wrapper" style="float: left; margin-left: 15px;"></div>');
+        if ($secondaryToolbar.length && !$secondaryToolbar.find('#wpmme-media-tab-filter').length) {
             
-            // Use a generic div instead of h2.media-attachments-filter-heading to avoid WP's absolute positioning which causes overlaps
-            $wrapper.append('<div style="margin: 0 0 4px 0; font-size: 13px; font-weight: 600; color: #50575e;">Filter by Tab</div>');
-            
-            var $select = $('<select id="wpmme-media-tab-filter" class="attachment-filters" style="display: inline-block !important; width: auto !important; max-width: 150px; margin: 0;"></select>');
+            var $select = $('<select id="wpmme-media-tab-filter" class="attachment-filters" style="display: inline-block !important; width: auto !important; max-width: 150px; margin: 11px 6px 0 0;"></select>');
             $select.append($('<option value="all">All Tabs</option>'));
             $.each(wpmme_media_tabs_obj.tabs, function(index, tab) {
                 $select.append($('<option value="' + tab.term_id + '">' + tab.name + '</option>'));
@@ -66,11 +63,15 @@ jQuery(document).ready(function($) {
                 updateQueryAndUploader($(this).val());
             });
 
-            $wrapper.append($select);
+            // Expand the secondary toolbar so the new filter doesn't wrap and get hidden by overflow
+            $secondaryToolbar.css({
+                'max-width': 'none',
+                'width': 'auto',
+                'padding-right': '20px'
+            });
 
-            // Insert directly into the toolbar, right after the secondary section (Date Filter)
-            // This safely places it in the vast empty space between left and right sections.
-            $wrapper.insertAfter($modalTopToolbar.find('.media-toolbar-secondary'));
+            // Append directly next to the date filter natively
+            $secondaryToolbar.append($select);
         }
     });
     observer.observe(document.body, { childList: true, subtree: true });
