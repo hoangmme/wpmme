@@ -49,7 +49,10 @@ jQuery(document).ready(function($) {
         var $modalTopToolbar = $('.media-modal .attachments-browser > .media-toolbar');
         
         if ($modalTopToolbar.length && !$modalTopToolbar.find('#wpmme-media-tab-filter').length) {
-            var $select = $('<select id="wpmme-media-tab-filter" class="attachment-filters" style="display: inline-block !important; width: auto !important; max-width: 150px; margin-left: 10px; float: left; margin-top: 11px;"></select>');
+            var $wrapper = $('<div class="wpmme-media-tab-filter-wrapper" style="float: left; margin-left: 15px;"></div>');
+            $wrapper.append('<h2 class="media-attachments-filter-heading" style="margin: 0 0 5px 0; font-size: 13px; font-weight: 600; color: #50575e;">Filter by Tab</h2>');
+            
+            var $select = $('<select id="wpmme-media-tab-filter" class="attachment-filters" style="display: inline-block !important; width: auto !important; max-width: 150px; margin: 0;"></select>');
             $select.append($('<option value="all">All Tabs</option>'));
             $.each(wpmme_media_tabs_obj.tabs, function(index, tab) {
                 $select.append($('<option value="' + tab.term_id + '">' + tab.name + '</option>'));
@@ -61,9 +64,11 @@ jQuery(document).ready(function($) {
                 updateQueryAndUploader($(this).val());
             });
 
+            $wrapper.append($select);
+
             // Insert directly into the toolbar, right after the secondary section (Date Filter)
             // This safely places it in the vast empty space between left and right sections.
-            $select.insertAfter($modalTopToolbar.find('.media-toolbar-secondary'));
+            $wrapper.insertAfter($modalTopToolbar.find('.media-toolbar-secondary'));
         }
     });
     observer.observe(document.body, { childList: true, subtree: true });
