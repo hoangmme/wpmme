@@ -50,7 +50,7 @@ jQuery(document).ready(function($) {
         var $modalTopToolbar = $('.media-modal .attachments-browser > .media-toolbar > .media-toolbar-secondary');
         
         if ($modalTopToolbar.length && !$modalTopToolbar.find('#wpmme-media-tab-filter').length) {
-            var $select = $('<select id="wpmme-media-tab-filter" class="attachment-filters" style="max-width:150px; margin-left:10px;"></select>');
+            var $select = $('<select id="wpmme-media-tab-filter" class="attachment-filters" style="display: inline-block !important; width: auto !important; max-width: 150px; margin-left: 10px; float: left;"></select>');
             $select.append($('<option value="all">All Tabs</option>'));
             $.each(wpmme_media_tabs_obj.tabs, function(index, tab) {
                 $select.append($('<option value="' + tab.term_id + '">' + tab.name + '</option>'));

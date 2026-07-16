@@ -1,0 +1,1 @@
+var $select = jQuery('<select id="wpmme-media-tab-filter" class="attachment-filters" style="display: inline-block !important; width: auto !important; max-width: 150px !important; margin-left: 10px !important; float: left !important; visibility: visible !important; position: relative !important; opacity: 1 !important; z-index: 9999 !important;"></select>');
