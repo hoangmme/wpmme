@@ -3,12 +3,61 @@ jQuery(document).ready(function($) {
 
     var currentTab = wpmme_media_tabs_obj.active_tab || 'all';
     
-    // Global Observer for both Grid View and Modal View to inject Dropdown
-    var observer = new MutationObserver(function(mutations) {
-        var $secondaryToolbar = $('.media-toolbar-secondary');
+    // Inject custom tabs into the Grid View UI
+    function injectTabs() {
+        if ($('.wpmme-media-tabs').length) return;
+
+        var $tabsContainer = $('<div class="wpmme-media-tabs"></div>');
         
-        $secondaryToolbar.each(function() {
+        var isAllActive = (currentTab === 'all') ? ' active' : '';
+        var $allTab = $('<button type="button" class="wpmme-media-tab' + isAllActive + '"></button>')
+            .text('All')
+            .data('id', 'all')
+            .data('slug', 'all');
+        $tabsContainer.append($allTab);
+
+        $.each(wpmme_media_tabs_obj.tabs, function(index, tab) {
+            var isActive = (currentTab == tab.term_id) ? ' active' : '';
+            var $tab = $('<button type="button" class="wpmme-media-tab' + isActive + '"></button>')
+                .text(tab.name)
+                .data('id', tab.term_id)
+                .data('slug', tab.slug);
+            $tabsContainer.append($tab);
+        });
+
+        var $addTabBtn = $('<button type="button" class="wpmme-media-tab-add" title="Add New Tab">+</button>');
+        $tabsContainer.append($addTabBtn);
+
+        // For Media Grid
+        if ($('.media-toolbar').length) {
+            $tabsContainer.insertBefore('.media-toolbar');
+        }
+    }
+
+    // Global Observer for both Grid View and Modal View
+    var observer = new MutationObserver(function(mutations) {
+        // 1. Grid View Injection (Tabs)
+        if ($('body').hasClass('upload-php') && $('.wrap').length) {
+            if ($('.media-toolbar').length && !$('.wpmme-media-tabs').length) {
+                injectTabs();
+            }
+        }
+
+        // 2. Modal View Injection (Dropdown)
+        // We only inject the dropdown in the modal (when NOT in upload.php, OR if it's a true modal inside upload.php, but usually upload.php is the grid)
+        // Actually, upload.php can have modals too (e.g. edit image). But for simplicity, we can inject dropdown in ANY .media-toolbar-secondary
+        // EXCEPT if we are strictly in the main grid view (which has .wpmme-media-tabs). 
+        // Wait, the main grid view has .media-toolbar-secondary too. If we don't want the dropdown there, we skip if the toolbar is a direct sibling of .wpmme-media-tabs.
+        // The easiest way: inject dropdown everywhere in .media-toolbar-secondary EXCEPT in the main grid toolbar of upload.php!
+        
+        $('.media-toolbar-secondary').each(function() {
             var $toolbar = $(this);
+            // If this is the main grid toolbar in upload.php, it's inside .media-frame-content but we injected .wpmme-media-tabs before .media-toolbar
+            if ($('body').hasClass('upload-php') && $toolbar.closest('.media-frame-content').find('.wpmme-media-tabs').length > 0) {
+                // If it's the main grid view which already has tabs, do not inject the dropdown here.
+                return;
+            }
+
             if (!$toolbar.find('#wpmme-media-tab-filter').length) {
                 var $select = $('<select id="wpmme-media-tab-filter" class="attachment-filters" style="max-width:150px; margin-left:10px;"></select>');
                 $select.append($('<option value="all">All Tabs</option>'));
@@ -23,55 +72,6 @@ jQuery(document).ready(function($) {
                 });
 
                 $toolbar.append($select);
-
-                // Add Manage buttons ONLY in upload.php Grid View
-                if ($('body').hasClass('upload-php') && $('.wrap').length) {
-                    var $addBtn = $('<button type="button" class="button" style="margin-left:5px;" title="Add New Tab">+</button>');
-                    $addBtn.on('click', function() {
-                        var tabName = prompt('Enter new tab name:');
-                        if (tabName) {
-                            $.ajax({
-                                url: wpmme_media_tabs_obj.ajaxurl,
-                                type: 'POST',
-                                data: { action: 'wpmme_add_media_tab', tab_name: tabName, nonce: wpmme_media_tabs_obj.nonce },
-                                success: function(response) {
-                                    if (response.success) {
-                                        wpmme_media_tabs_obj.tabs.push(response.data);
-                                        // Update all dropdowns
-                                        $('select#wpmme-media-tab-filter').append($('<option value="' + response.data.term_id + '">' + response.data.name + '</option>'));
-                                        $('select#wpmme-media-tab-filter').val(response.data.term_id).trigger('change');
-                                    } else {
-                                        alert('Error adding tab: ' + response.data);
-                                    }
-                                }
-                            });
-                        }
-                    });
-
-                    var $renameBtn = $('<button type="button" class="button" style="margin-left:5px;" title="Rename Current Tab">✏️</button>');
-                    $renameBtn.on('click', function() {
-                        if (currentTab === 'all') return alert('Cannot rename All Tabs');
-                        var currentName = $('select#wpmme-media-tab-filter option:selected').text();
-                        var newName = prompt('Rename tab:', currentName);
-                        if (newName && newName !== currentName) {
-                            $.ajax({
-                                url: wpmme_media_tabs_obj.ajaxurl,
-                                type: 'POST',
-                                data: { action: 'wpmme_rename_media_tab', term_id: currentTab, new_name: newName, nonce: wpmme_media_tabs_obj.nonce },
-                                success: function(response) {
-                                    if (response.success) {
-                                        // Update the name in all dropdowns
-                                        $('select#wpmme-media-tab-filter option[value="' + currentTab + '"]').text(newName);
-                                    } else {
-                                        alert('Error renaming tab: ' + response.data);
-                                    }
-                                }
-                            });
-                        }
-                    });
-
-                    $toolbar.append($addBtn).append($renameBtn);
-                }
             }
         });
     });
@@ -144,6 +144,12 @@ jQuery(document).ready(function($) {
     function updateQueryAndUploader(tabId) {
         currentTab = tabId;
 
+        // Sync grid buttons if they exist
+        if ($('.wpmme-media-tab').length) {
+            $('.wpmme-media-tab').removeClass('active');
+            $('.wpmme-media-tab[data-id="' + tabId + '"]').addClass('active');
+        }
+
         // Sync modal and grid dropdowns if there are multiple
         if ($('#wpmme-media-tab-filter').length) {
             $('#wpmme-media-tab-filter').val(tabId);
@@ -168,4 +174,72 @@ jQuery(document).ready(function($) {
             }
         }
     }
+
+    $(document).on('click', '.wpmme-media-tab', function() {
+        var $tab = $(this);
+        if ($tab.hasClass('active')) return;
+
+        $('.wpmme-media-tab').removeClass('active');
+        $tab.addClass('active');
+
+        var tabId = $tab.data('id');
+        updateQueryAndUploader(tabId);
+    });
+
+    $(document).on('click', '.wpmme-media-tab-add', function() {
+        var tabName = prompt('Enter new tab name:');
+        if (tabName) {
+            $.ajax({
+                url: wpmme_media_tabs_obj.ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'wpmme_add_media_tab',
+                    tab_name: tabName,
+                    nonce: wpmme_media_tabs_obj.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        wpmme_media_tabs_obj.tabs.push(response.data);
+                        var $newTab = $('<button type="button" class="wpmme-media-tab"></button>')
+                            .text(response.data.name)
+                            .data('id', response.data.term_id)
+                            .data('slug', response.data.slug);
+                        $newTab.insertBefore('.wpmme-media-tab-add');
+                        $newTab.trigger('click');
+                    } else {
+                        alert('Error adding tab: ' + response.data);
+                    }
+                }
+            });
+        }
+    });
+
+    $(document).on('dblclick', '.wpmme-media-tab:not(.active[data-id="all"])', function() {
+        var $tab = $(this);
+        var tabId = $tab.data('id');
+        if (tabId === 'all') return;
+
+        var currentName = $tab.text();
+        var newName = prompt('Rename tab:', currentName);
+        
+        if (newName && newName !== currentName) {
+            $.ajax({
+                url: wpmme_media_tabs_obj.ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'wpmme_rename_media_tab',
+                    term_id: tabId,
+                    new_name: newName,
+                    nonce: wpmme_media_tabs_obj.nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $tab.text(newName);
+                    } else {
+                        alert('Error renaming tab: ' + response.data);
+                    }
+                }
+            });
+        }
+    });
 });
