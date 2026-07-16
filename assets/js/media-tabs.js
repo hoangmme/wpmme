@@ -29,7 +29,7 @@ jQuery(document).ready(function($) {
         $tabsContainer.append($addTabBtn);
 
         // For Media Grid only
-        var $gridToolbar = $('.media-frame.mode-grid .media-toolbar');
+        var $gridToolbar = $('#wp-media-grid .media-frame .media-toolbar').first();
         if ($gridToolbar.length) {
             $tabsContainer.insertBefore($gridToolbar);
         }
@@ -38,8 +38,8 @@ jQuery(document).ready(function($) {
     // Global Observer for both Grid View and Modal View
     var observer = new MutationObserver(function(mutations) {
         // 1. Grid View Injection (Tabs)
-        if ($('body').hasClass('upload-php') && $('.wrap').length) {
-            if ($('.media-frame.mode-grid .media-toolbar').length && !$('.media-frame.mode-grid .wpmme-media-tabs').length) {
+        if ($('#wp-media-grid').length) {
+            if ($('#wp-media-grid .media-toolbar').length && !$('#wp-media-grid .wpmme-media-tabs').length) {
                 injectTabs();
             }
         }
@@ -47,8 +47,9 @@ jQuery(document).ready(function($) {
         // 2. Modal View Injection (Dropdown)
         $('.media-toolbar-secondary').each(function() {
             var $toolbar = $(this);
-            // Skip dropdown injection if this toolbar is inside the main grid which already has the button tabs
-            if ($toolbar.closest('.media-frame.mode-grid').length > 0) {
+            
+            // Skip dropdown injection if this toolbar is inside the main grid (which uses buttons instead)
+            if ($toolbar.closest('#wp-media-grid').length > 0) {
                 return;
             }
 
