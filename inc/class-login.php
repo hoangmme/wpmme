@@ -91,18 +91,8 @@ class WPMME_Login {
                 }
                 if (isset($_GET['interim-login'])) return;
 
-                // Block access - return 404
-                global $wp_query;
-                if (!isset($wp_query)) $wp_query = new WP_Query();
-                $wp_query->set_404();
-                status_header(404);
-                nocache_headers();
-                $template = get_query_template('404');
-                if (!empty($template) && file_exists($template)) {
-                    include($template);
-                } else {
-                    wp_die(__('404 Not Found'), __('Page not found'), array('response' => 404));
-                }
+                // Block access - redirect to a non-existent URL to naturally trigger the theme's 404 page
+                wp_safe_redirect(home_url('/404'));
                 exit;
             }
 
@@ -112,17 +102,8 @@ class WPMME_Login {
                     return;
                 }
 
-                global $wp_query;
-                if (!isset($wp_query)) $wp_query = new WP_Query();
-                $wp_query->set_404();
-                status_header(404);
-                nocache_headers();
-                $template = get_query_template('404');
-                if (!empty($template) && file_exists($template)) {
-                    include($template);
-                } else {
-                    wp_die(__('404 Not Found'), __('Page not found'), array('response' => 404));
-                }
+                // Block access - redirect to a non-existent URL to naturally trigger the theme's 404 page
+                wp_safe_redirect(home_url('/404'));
                 exit;
             }
         });
