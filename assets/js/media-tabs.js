@@ -28,9 +28,10 @@ jQuery(document).ready(function($) {
         var $addTabBtn = $('<button type="button" class="wpmme-media-tab-add" title="Add New Tab">+</button>');
         $tabsContainer.append($addTabBtn);
 
-        // For Media Grid
-        if ($('.media-toolbar').length) {
-            $tabsContainer.insertBefore('.media-toolbar');
+        // For Media Grid only
+        var $gridToolbar = $('.media-frame.mode-grid .media-toolbar');
+        if ($gridToolbar.length) {
+            $tabsContainer.insertBefore($gridToolbar);
         }
     }
 
@@ -38,23 +39,16 @@ jQuery(document).ready(function($) {
     var observer = new MutationObserver(function(mutations) {
         // 1. Grid View Injection (Tabs)
         if ($('body').hasClass('upload-php') && $('.wrap').length) {
-            if ($('.media-toolbar').length && !$('.wpmme-media-tabs').length) {
+            if ($('.media-frame.mode-grid .media-toolbar').length && !$('.media-frame.mode-grid .wpmme-media-tabs').length) {
                 injectTabs();
             }
         }
 
         // 2. Modal View Injection (Dropdown)
-        // We only inject the dropdown in the modal (when NOT in upload.php, OR if it's a true modal inside upload.php, but usually upload.php is the grid)
-        // Actually, upload.php can have modals too (e.g. edit image). But for simplicity, we can inject dropdown in ANY .media-toolbar-secondary
-        // EXCEPT if we are strictly in the main grid view (which has .wpmme-media-tabs). 
-        // Wait, the main grid view has .media-toolbar-secondary too. If we don't want the dropdown there, we skip if the toolbar is a direct sibling of .wpmme-media-tabs.
-        // The easiest way: inject dropdown everywhere in .media-toolbar-secondary EXCEPT in the main grid toolbar of upload.php!
-        
         $('.media-toolbar-secondary').each(function() {
             var $toolbar = $(this);
-            // If this is the main grid toolbar in upload.php, it's inside .media-frame-content but we injected .wpmme-media-tabs before .media-toolbar
-            if ($('body').hasClass('upload-php') && $toolbar.closest('.media-frame-content').find('.wpmme-media-tabs').length > 0) {
-                // If it's the main grid view which already has tabs, do not inject the dropdown here.
+            // Skip dropdown injection if this toolbar is inside the main grid which already has the button tabs
+            if ($toolbar.closest('.media-frame.mode-grid').length > 0) {
                 return;
             }
 
