@@ -29,7 +29,8 @@ jQuery(document).ready(function($) {
         $tabsContainer.append($addTabBtn);
 
         // For Media Grid only
-        var $gridToolbar = $('#wp-media-grid .media-frame .media-toolbar').first();
+        // Target the main grid toolbar which is NOT inside a modal
+        var $gridToolbar = $('.media-frame:not(.media-modal .media-frame) .media-toolbar').first();
         if ($gridToolbar.length) {
             $tabsContainer.insertBefore($gridToolbar);
         }
@@ -37,22 +38,17 @@ jQuery(document).ready(function($) {
 
     // Global Observer for both Grid View and Modal View
     var observer = new MutationObserver(function(mutations) {
-        // 1. Grid View Injection (Tabs)
-        if ($('#wp-media-grid').length) {
-            if ($('#wp-media-grid .media-toolbar').length && !$('#wp-media-grid .wpmme-media-tabs').length) {
-                injectTabs();
-            }
+        // 1. Grid View Injection (Tabs as buttons)
+        // We only inject if there is a main media frame (not inside a popup modal)
+        if ($('.media-frame:not(.media-modal .media-frame) .media-toolbar').length && !$('.wpmme-media-tabs').length) {
+            injectTabs();
         }
 
-        // 2. Modal View Injection (Dropdown)
-        $('.media-toolbar-secondary').each(function() {
+        // 2. Modal View Injection (Dropdown next to date filter)
+        // We strictly target the secondary toolbar inside a popup modal
+        $('.media-modal .media-toolbar-secondary').each(function() {
             var $toolbar = $(this);
             
-            // Skip dropdown injection if this toolbar is inside the main grid (which uses buttons instead)
-            if ($toolbar.closest('#wp-media-grid').length > 0) {
-                return;
-            }
-
             if (!$toolbar.find('#wpmme-media-tab-filter').length) {
                 var $select = $('<select id="wpmme-media-tab-filter" class="attachment-filters" style="max-width:150px; margin-left:10px;"></select>');
                 $select.append($('<option value="all">All Tabs</option>'));
@@ -66,6 +62,7 @@ jQuery(document).ready(function($) {
                     updateQueryAndUploader($(this).val());
                 });
 
+                // Append after the date filter / spinner
                 $toolbar.append($select);
             }
         });
