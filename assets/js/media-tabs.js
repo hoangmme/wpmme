@@ -44,12 +44,12 @@ jQuery(document).ready(function($) {
             injectTabs();
         }
 
-        // 2. Modal View Injection (Dropdown next to search box)
-        // We target the primary toolbar to avoid truncation/hidden overflow issues in secondary toolbar on Desktop
-        var $modalTopToolbar = $('.media-modal .attachments-browser > .media-toolbar > .media-toolbar-primary.search-form');
+        // 2. Modal View Injection (Dropdown floating in the middle)
+        // We target the main toolbar and insert after secondary to bypass 33% width limit, and avoid primary label collision
+        var $modalTopToolbar = $('.media-modal .attachments-browser > .media-toolbar');
         
         if ($modalTopToolbar.length && !$modalTopToolbar.find('#wpmme-media-tab-filter').length) {
-            var $select = $('<select id="wpmme-media-tab-filter" class="attachment-filters" style="display: inline-block !important; width: auto !important; max-width: 150px; margin-right: 15px; float: left; margin-top: 11px;"></select>');
+            var $select = $('<select id="wpmme-media-tab-filter" class="attachment-filters" style="display: inline-block !important; width: auto !important; max-width: 150px; margin-left: 10px; float: left; margin-top: 11px;"></select>');
             $select.append($('<option value="all">All Tabs</option>'));
             $.each(wpmme_media_tabs_obj.tabs, function(index, tab) {
                 $select.append($('<option value="' + tab.term_id + '">' + tab.name + '</option>'));
@@ -61,8 +61,9 @@ jQuery(document).ready(function($) {
                 updateQueryAndUploader($(this).val());
             });
 
-            // Prepend before the search box
-            $modalTopToolbar.prepend($select);
+            // Insert directly into the toolbar, right after the secondary section (Date Filter)
+            // This safely places it in the vast empty space between left and right sections.
+            $select.insertAfter($modalTopToolbar.find('.media-toolbar-secondary'));
         }
     });
     observer.observe(document.body, { childList: true, subtree: true });
