@@ -45,27 +45,26 @@ jQuery(document).ready(function($) {
         }
 
         // 2. Modal View Injection (Dropdown next to date filter)
-        // We strictly target the secondary toolbar inside a popup modal
-        $('.media-modal .media-toolbar-secondary').each(function() {
-            var $toolbar = $(this);
+        // We strictly target the top toolbar inside the attachments browser of a popup modal
+        // This avoids the bottom toolbar inside .media-frame-toolbar
+        var $modalTopToolbar = $('.media-modal .attachments-browser > .media-toolbar > .media-toolbar-secondary');
+        
+        if ($modalTopToolbar.length && !$modalTopToolbar.find('#wpmme-media-tab-filter').length) {
+            var $select = $('<select id="wpmme-media-tab-filter" class="attachment-filters" style="max-width:150px; margin-left:10px;"></select>');
+            $select.append($('<option value="all">All Tabs</option>'));
+            $.each(wpmme_media_tabs_obj.tabs, function(index, tab) {
+                $select.append($('<option value="' + tab.term_id + '">' + tab.name + '</option>'));
+            });
             
-            if (!$toolbar.find('#wpmme-media-tab-filter').length) {
-                var $select = $('<select id="wpmme-media-tab-filter" class="attachment-filters" style="max-width:150px; margin-left:10px;"></select>');
-                $select.append($('<option value="all">All Tabs</option>'));
-                $.each(wpmme_media_tabs_obj.tabs, function(index, tab) {
-                    $select.append($('<option value="' + tab.term_id + '">' + tab.name + '</option>'));
-                });
-                
-                $select.val(currentTab);
-                
-                $select.on('change', function() {
-                    updateQueryAndUploader($(this).val());
-                });
+            $select.val(currentTab);
+            
+            $select.on('change', function() {
+                updateQueryAndUploader($(this).val());
+            });
 
-                // Append after the date filter / spinner
-                $toolbar.append($select);
-            }
-        });
+            // Append after the date filter / spinner
+            $modalTopToolbar.append($select);
+        }
     });
     observer.observe(document.body, { childList: true, subtree: true });
 
