@@ -44,13 +44,12 @@ jQuery(document).ready(function($) {
             injectTabs();
         }
 
-        // 2. Modal View Injection (Dropdown next to date filter)
-        // We strictly target the top toolbar inside the attachments browser of a popup modal
-        // This avoids the bottom toolbar inside .media-frame-toolbar
-        var $modalTopToolbar = $('.media-modal .attachments-browser > .media-toolbar > .media-toolbar-secondary');
+        // 2. Modal View Injection (Dropdown next to search box)
+        // We target the primary toolbar to avoid truncation/hidden overflow issues in secondary toolbar on Desktop
+        var $modalTopToolbar = $('.media-modal .attachments-browser > .media-toolbar > .media-toolbar-primary.search-form');
         
         if ($modalTopToolbar.length && !$modalTopToolbar.find('#wpmme-media-tab-filter').length) {
-            var $select = $('<select id="wpmme-media-tab-filter" class="attachment-filters" style="display: inline-block !important; width: auto !important; max-width: 150px; margin-left: 10px; float: left;"></select>');
+            var $select = $('<select id="wpmme-media-tab-filter" class="attachment-filters" style="display: inline-block !important; width: auto !important; max-width: 150px; margin-right: 15px; float: left; margin-top: 11px;"></select>');
             $select.append($('<option value="all">All Tabs</option>'));
             $.each(wpmme_media_tabs_obj.tabs, function(index, tab) {
                 $select.append($('<option value="' + tab.term_id + '">' + tab.name + '</option>'));
@@ -62,8 +61,8 @@ jQuery(document).ready(function($) {
                 updateQueryAndUploader($(this).val());
             });
 
-            // Append after the date filter / spinner
-            $modalTopToolbar.append($select);
+            // Prepend before the search box
+            $modalTopToolbar.prepend($select);
         }
     });
     observer.observe(document.body, { childList: true, subtree: true });
