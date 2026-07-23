@@ -35,7 +35,11 @@ class WPMME_Editor {
     }
 
     public function add_body_class($settings) {
-        $settings['body_class'] = 'wpmme-editor';
+        if (isset($settings['body_class'])) {
+            $settings['body_class'] .= ' wpmme-editor';
+        } else {
+            $settings['body_class'] = 'wpmme-editor';
+        }
         return $settings;
     }
 }
