@@ -39,12 +39,8 @@ class WPMME_TinyMCE {
         $settings['fontsize_formats'] = '8px 10px 12px 14px 16px 18px 20px 24px 28px 32px 36px 48px 64px 72px 96px';
         $settings['block_formats'] = 'Paragraph=p;Heading 1=h1;Heading 2=h2;Heading 3=h3;Heading 4=h4;Heading 5=h5;Heading 6=h6;Preformatted=pre;Code=code';
         
-        // Prevent random line breaks and wpautop jumping
-        $settings['wpautop'] = true;
-        $settings['force_p_newlines'] = true;
-        $settings['force_br_newlines'] = false;
-        $settings['convert_newlines_to_brs'] = false;
-        $settings['remove_linebreaks'] = true;
+        // Removed custom wpautop/newline settings because WordPress's native wpautop 
+        // handles this much better, and overriding it breaks Google Docs copy-pasting.
 
         return $settings;
     }
