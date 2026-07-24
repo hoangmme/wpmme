@@ -23,49 +23,40 @@ class WPMME_ImgAttr {
             return $content;
         }
 
-        // WordPress content_save_pre receives slashed data. Unslash before DOMDocument parsing.
+        // WordPress content_save_pre receives slashed data. Unslash before processing.
         $unslashed_content = wp_unslash($content);
 
-        $dom = new DOMDocument();
-        $libxml_previous_state = libxml_use_internal_errors(true);
-        
-        // Load HTML with UTF-8 encoding
-        $dom->loadHTML('<?xml encoding="utf-8" ?>' . $unslashed_content, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
-        
-        libxml_clear_errors();
-        libxml_use_internal_errors($libxml_previous_state);
-
-        $images = $dom->getElementsByTagName('img');
-        $images_to_replace = array();
-
-        foreach ($images as $img) {
+        // Safely replace all img tags with clean ones using regex to avoid DOMDocument mangling whitespace
+        $new_content = preg_replace_callback('/<img[^>]+>/i', function($matches) {
+            $img_tag = $matches[0];
+            
+            // Extract src or data-src
             $src = '';
-            if ($img->hasAttribute('data-src')) {
-                $src = $img->getAttribute('data-src');
-            } elseif ($img->hasAttribute('src')) {
-                $src = $img->getAttribute('src');
+            if (preg_match('/data-src=["\']([^"\']+)["\']/i', $img_tag, $src_matches)) {
+                $src = $src_matches[1];
+            } elseif (preg_match('/src=["\']([^"\']+)["\']/i', $img_tag, $src_matches)) {
+                $src = $src_matches[1];
+            }
+            $src = $this->clean_url($src);
+
+            // Extract alt
+            $alt = '';
+            if (preg_match('/alt=["\']([^"\']*)["\']/i', $img_tag, $alt_matches)) {
+                $alt = trim(stripslashes($alt_matches[1]), "\"'\\ ");
             }
 
-            $src = $this->clean_url($src);
-            $alt = $img->hasAttribute('alt') ? trim(stripslashes($img->getAttribute('alt')), "\"'\\ ") : '';
-
-            $new_img = $dom->createElement('img');
+            // Rebuild img tag
+            $new_img = '<img';
             if (!empty($src)) {
-                $new_img->setAttribute('src', $src);
+                $new_img .= ' src="' . esc_attr($src) . '"';
             }
             if (!empty($alt)) {
-                $new_img->setAttribute('alt', $alt);
+                $new_img .= ' alt="' . esc_attr($alt) . '"';
             }
+            $new_img .= ' />';
 
-            $images_to_replace[] = array('old' => $img, 'new' => $new_img);
-        }
-
-        foreach ($images_to_replace as $item) {
-            $item['old']->parentNode->replaceChild($item['new'], $item['old']);
-        }
-
-        $new_content = $dom->saveHTML();
-        $new_content = str_replace('<?xml encoding="utf-8" ?>', '', $new_content);
+            return $new_img;
+        }, $unslashed_content);
 
         // Return slashed content to conform with content_save_pre convention
         return wp_slash($new_content);
