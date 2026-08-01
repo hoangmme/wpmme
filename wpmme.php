@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
 }
 
 define('WPMME_VERSION', '1.0.0');
-define('WPMME_BUILD', '20260801.1415');
+define('WPMME_BUILD', '20260801.1425');
 define('WPMME_DIR', plugin_dir_path(__FILE__));
 define('WPMME_URL', plugin_dir_url(__FILE__));
 
@@ -39,7 +39,6 @@ require_once WPMME_DIR . 'inc/class-limit-login.php';
 require_once WPMME_DIR . 'inc/class-media-replace.php';
 require_once WPMME_DIR . 'inc/class-media-tabs.php';
 require_once WPMME_DIR . 'inc/class-updater.php';
-require_once WPMME_DIR . 'inc/class-deploy.php';
 require_once WPMME_DIR . 'inc/class-cli.php';
 
 // Initialize Plugin
@@ -101,7 +100,6 @@ function wpmme_init() {
     }
     
     new WPMME_Updater();
-    new WPMME_Deploy();
 }
 add_action('plugins_loaded', 'wpmme_init');
 
