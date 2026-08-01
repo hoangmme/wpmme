@@ -279,6 +279,19 @@ $options = wpmme_get_options();
         <div class="wpmme-card">
             <div class="wpmme-card-header">
                 <div class="wpmme-card-info">
+                    <h3>Disable Password Reset</h3>
+                    <p>Prevent users from resetting their passwords using the "Lost Password" form.</p>
+                </div>
+                <label class="wpmme-switch">
+                    <input type="checkbox" name="disable_password_reset" <?php checked($options['disable_password_reset']); ?>>
+                    <span class="wpmme-slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="wpmme-card">
+            <div class="wpmme-card-header">
+                <div class="wpmme-card-info">
                     <h3>Disable Comments</h3>
                     <p>Disable comments globally across the entire site.</p>
                 </div>

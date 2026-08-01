@@ -21,6 +21,13 @@ class WPMME_Security {
         if (!empty($this->options['disable_author'])) {
             $this->disable_author_archive();
         }
+        if (!empty($this->options['disable_password_reset'])) {
+            $this->disable_password_reset();
+        }
+    }
+
+    private function disable_password_reset() {
+        add_filter('allow_password_reset', '__return_false');
     }
 
     private function disable_xmlrpc() {

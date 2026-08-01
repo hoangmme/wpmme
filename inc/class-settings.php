@@ -23,7 +23,7 @@ class WPMME_Settings {
             'imgattr', 'rename', 'webp', 'watermark', 'disable_xmlrpc',
             'remove_version', 'disable_rest_users', 'disable_author',
             'disable_comments', 'login_logo', 'login_slug',
-            'media_replace', 'admin_bar_clean', 'limit_login'
+            'media_replace', 'admin_bar_clean', 'limit_login', 'disable_password_reset'
         );
 
         foreach ($checkbox_fields as $field) {
