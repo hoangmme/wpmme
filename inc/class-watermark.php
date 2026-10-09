@@ -60,8 +60,8 @@ class WPMME_Watermark {
 
         // Scale watermark
         $size_pct = isset($this->options['watermark_size']) ? (int)$this->options['watermark_size'] : 30;
-        $target_w = $main_w * ($size_pct / 100);
-        $target_h = $wm_h * ($target_w / $wm_w);
+        $target_w = (int)($main_w * ($size_pct / 100));
+        $target_h = (int)($wm_h * ($target_w / $wm_w));
 
         $wm_resized = imagecreatetruecolor($target_w, $target_h);
         imagealphablending($wm_resized, false);

@@ -21,14 +21,9 @@ class WPMME_Limit_Login {
     }
 
     private function get_client_ip() {
-        $ip = '';
-        if (isset($_SERVER['HTTP_CLIENT_IP'])) {
-            $ip = $_SERVER['HTTP_CLIENT_IP'];
-        } elseif (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-            $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-        } elseif (isset($_SERVER['REMOTE_ADDR'])) {
-            $ip = $_SERVER['REMOTE_ADDR'];
-        }
+        // Only trust REMOTE_ADDR — X-Forwarded-For and HTTP_CLIENT_IP
+        // can be trivially spoofed by attackers to bypass rate limiting.
+        $ip = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '0.0.0.0';
         return sanitize_text_field(wp_unslash($ip));
     }
 

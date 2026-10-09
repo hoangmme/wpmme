@@ -81,14 +81,18 @@ class WPMME_Login {
             $is_wp_login = (strpos($request_path, 'wp-login.php') !== false);
 
             if ($is_wp_login && !defined('WPMME_LEGIT_LOGIN') && !is_admin()) {
-                // Allow POST requests (form submissions to wp-login.php are standard)
-                if ($_SERVER['REQUEST_METHOD'] === 'POST') return;
-
-                // Allow specific actions (logout, resetpass)
+                // Allow specific safe actions that WordPress needs (logout, confirm, postpass)
                 $action = isset($_GET['action']) ? $_GET['action'] : '';
-                if (in_array($action, array('logout', 'resetpass', 'rp', 'confirmaction', 'postpass'))) {
+                if (in_array($action, array('logout', 'confirmaction', 'postpass'))) {
                     return;
                 }
+                
+                // Allow resetpass/rp only if password reset is not disabled
+                $options = wpmme_get_options();
+                if (empty($options['disable_password_reset']) && in_array($action, array('resetpass', 'rp'))) {
+                    return;
+                }
+                
                 if (isset($_GET['interim-login'])) return;
 
                 // Block access - redirect to a non-existent URL to naturally trigger the theme's 404 page

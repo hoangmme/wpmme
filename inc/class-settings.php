@@ -23,7 +23,8 @@ class WPMME_Settings {
             'imgattr', 'rename', 'webp', 'watermark', 'disable_xmlrpc',
             'remove_version', 'disable_rest_users', 'disable_author',
             'disable_comments', 'login_logo', 'login_slug',
-            'media_replace', 'admin_bar_clean', 'limit_login', 'disable_password_reset'
+            'media_replace', 'admin_bar_clean', 'limit_login', 'disable_password_reset',
+            'block_php_uploads'
         );
 
         foreach ($checkbox_fields as $field) {
@@ -62,6 +63,13 @@ class WPMME_Settings {
         }
 
         update_option('wpmme_options', $options);
+
+        // Apply or remove PHP upload blocking based on setting
+        if (!empty($options['block_php_uploads'])) {
+            WPMME_Security::apply_block_php_uploads();
+        } else {
+            WPMME_Security::remove_block_php_uploads();
+        }
 
         wp_send_json_success('Settings saved successfully.');
     }

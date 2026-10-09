@@ -254,7 +254,7 @@ $options = wpmme_get_options();
             <div class="wpmme-card-header">
                 <div class="wpmme-card-info">
                     <h3>Disable REST API User Enumeration</h3>
-                    <p>Block access to /wp-json/wp/v2/users to prevent username leakage.</p>
+                    <p>Block access to /wp-json/wp/v2/users, /users/me and individual user endpoints for unauthenticated visitors.</p>
                 </div>
                 <label class="wpmme-switch">
                     <input type="checkbox" name="disable_rest_users" <?php checked($options['disable_rest_users']); ?>>
@@ -286,6 +286,43 @@ $options = wpmme_get_options();
                     <input type="checkbox" name="disable_password_reset" <?php checked($options['disable_password_reset']); ?>>
                     <span class="wpmme-slider"></span>
                 </label>
+            </div>
+        </div>
+
+        <div class="wpmme-card has-body">
+            <div class="wpmme-card-header">
+                <div class="wpmme-card-info">
+                    <h3>Block PHP in Uploads</h3>
+                    <p>Prevent PHP file execution inside wp-content/uploads/ to block uploaded shell scripts and backdoors.</p>
+                </div>
+                <label class="wpmme-switch">
+                    <input type="checkbox" name="block_php_uploads" id="toggle-block-php-uploads" <?php checked($options['block_php_uploads']); ?>>
+                    <span class="wpmme-slider"></span>
+                </label>
+            </div>
+            <div class="wpmme-card-body" id="body-block-php-uploads" <?php echo $options['block_php_uploads'] ? '' : 'style="display:none;"'; ?>>
+                <?php
+                $is_nginx = WPMME_Security::is_nginx();
+                $nginx_status = get_option('wpmme_nginx_php_block_status', false);
+                if ($is_nginx) : ?>
+                    <div class="wpmme-form-group">
+                        <p><strong>🌐 Server: Nginx detected</strong></p>
+                        <?php if ($nginx_status && !empty($nginx_status['applied'])) : ?>
+                            <p style="color:#46b450;">✅ Đã tự động cấu hình Nginx thành công (WordOps).</p>
+                        <?php elseif ($nginx_status && $nginx_status['method'] === 'manual_required') : ?>
+                            <p style="color:#d63638;">⚠️ Không thể tự động cấu hình Nginx. Vui lòng thêm đoạn code sau vào cấu hình Nginx của bạn:</p>
+                            <p class="description">Đường dẫn gợi ý cho WordOps: <code>/var/www/<?php echo esc_html(preg_replace('/^www\./', '', parse_url(home_url(), PHP_URL_HOST))); ?>/conf/nginx/custom.conf</code></p>
+                            <textarea readonly rows="6" style="width:100%;font-family:monospace;font-size:12px;background:#f0f0f0;margin-top:8px;"><?php echo esc_textarea(WPMME_Security::get_nginx_snippet()); ?></textarea>
+                            <p class="description">Sau khi thêm, chạy: <code>sudo nginx -t && sudo systemctl reload nginx</code></p>
+                        <?php else : ?>
+                            <p class="description">Lưu Settings để plugin tự động cấu hình cho Nginx/WordOps.</p>
+                        <?php endif; ?>
+                    </div>
+                <?php else : ?>
+                    <div class="wpmme-form-group">
+                        <p><strong>🌐 Server: Apache / LiteSpeed</strong> — Sử dụng .htaccess tự động.</p>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
 

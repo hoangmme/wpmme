@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
 }
 
 define('WPMME_VERSION', '1.0.0');
-define('WPMME_BUILD', '20260801.1425');
+define('WPMME_BUILD', '20261009.1245');
 define('WPMME_DIR', plugin_dir_path(__FILE__));
 define('WPMME_URL', plugin_dir_url(__FILE__));
 
@@ -111,6 +111,12 @@ function wpmme_activate() {
         $defaults = wpmme_get_default_options();
         update_option('wpmme_options', $defaults);
     }
+
+    // Apply PHP upload blocking on activation if enabled
+    $options = wpmme_get_options();
+    if (!empty($options['block_php_uploads'])) {
+        WPMME_Security::apply_block_php_uploads();
+    }
 }
 
 // Deactivation Hook
@@ -153,6 +159,8 @@ function wpmme_get_default_options() {
         'remove_version'       => true,
         'disable_rest_users'   => true,
         'disable_author'       => true,
+        'disable_password_reset'=> true,
+        'block_php_uploads'    => true,
         'disable_comments'     => true,
         'login_logo'           => true,
         'login_logo_url'       => 'https://mme.vn/wp-content/uploads/2026/06/Group-4.webp',
@@ -162,7 +170,6 @@ function wpmme_get_default_options() {
         'admin_bar_clean'      => true,
         'hide_notices'         => true,
         'limit_login'          => true,
-        'limit_login_retries'  => 4,
     );
 }
 
