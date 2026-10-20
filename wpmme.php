@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
 }
 
 define('WPMME_VERSION', '1.0.0');
-define('WPMME_BUILD', '20261020.2315');
+define('WPMME_BUILD', '20261020.2330');
 define('WPMME_DIR', plugin_dir_path(__FILE__));
 define('WPMME_URL', plugin_dir_url(__FILE__));
 
@@ -207,12 +207,54 @@ function wpmme_admin_assets($hook) {
         'nonce' => wp_create_nonce('wpmme_nonce')
     ));
 
-    // Polyfill for ACF / SCF to prevent JS errors on our custom page
-    wp_add_inline_script('wpmme-admin-js', 'window.acf = window.acf || {}; window.acf.add_filter = window.acf.add_filter || function() {}; window.acf.add_action = window.acf.add_action || function() {};', 'before');
-
     // Dequeue known conflicting plugin scripts on our page
     wp_dequeue_script('acf-input');
     wp_dequeue_script('acf-pro-input');
     wp_dequeue_script('scf-admin');
     wp_dequeue_script('smart-custom-fields');
+}
+
+// Early polyfill for ACF / SCF to prevent inline JS errors on our custom page before body scripts run
+add_action('admin_head', 'wpmme_admin_early_polyfills', 1);
+function wpmme_admin_early_polyfills() {
+    if (!isset($_GET['page']) || $_GET['page'] !== 'wpmme-settings') {
+        return;
+    }
+    ?>
+    <script type="text/javascript">
+        (function() {
+            window.acf = window.acf || {};
+            var noop = function() { return window.acf; };
+            var methods = [
+                'add_filter', 'add_action', 'addAction', 'addFilter',
+                'do_action', 'doAction', 'remove_filter', 'remove_action',
+                'removeFilter', 'removeAction', 'getField', 'getFields',
+                'findField', 'findFields', 'prepare', 'validation'
+            ];
+            for (var i = 0; i < methods.length; i++) {
+                if (typeof window.acf[methods[i]] !== 'function') {
+                    window.acf[methods[i]] = noop;
+                }
+            }
+            if (typeof window.acf.apply_filters !== 'function') window.acf.apply_filters = function(n, val) { return val; };
+            if (typeof window.acf.applyFilters !== 'function') window.acf.applyFilters = function(n, val) { return val; };
+            window.acf.models = window.acf.models || {};
+            window.acf.data = window.acf.data || {};
+
+            // Fallback proxy to prevent any undefined acf.* method from throwing
+            if (typeof Proxy !== 'undefined') {
+                try {
+                    window.acf = new Proxy(window.acf, {
+                        get: function(target, prop) {
+                            if (prop in target) {
+                                return target[prop];
+                            }
+                            return noop;
+                        }
+                    });
+                } catch(e) {}
+            }
+        })();
+    </script>
+    <?php
 }
