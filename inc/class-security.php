@@ -122,11 +122,19 @@ class WPMME_Security {
         remove_action('wp_head', 'wp_generator');
         add_filter('the_generator', '__return_empty_string');
 
-        add_filter('style_loader_src', array($this, 'remove_version_from_url'), 9999);
-        add_filter('script_loader_src', array($this, 'remove_version_from_url'), 9999);
+        // Only remove version query strings on the front-end!
+        // Never remove in admin, as WordPress core scripts (Gutenberg, React, Media)
+        // strictly rely on ?ver= for cache busting and version synchronization.
+        if (!is_admin()) {
+            add_filter('style_loader_src', array($this, 'remove_version_from_url'), 9999);
+            add_filter('script_loader_src', array($this, 'remove_version_from_url'), 9999);
+        }
     }
 
     public function remove_version_from_url($src) {
+        if (is_admin()) {
+            return $src;
+        }
         if (strpos($src, 'ver=') !== false) {
             $src = remove_query_arg('ver', $src);
         }
@@ -134,23 +142,10 @@ class WPMME_Security {
     }
 
     private function disable_rest_users() {
-        // Block user endpoints for unauthenticated requests
-        add_filter('rest_endpoints', function ($endpoints) {
-            if (!is_user_logged_in()) {
-                if (isset($endpoints['/wp/v2/users'])) {
-                    unset($endpoints['/wp/v2/users']);
-                }
-                if (isset($endpoints['/wp/v2/users/(?P<id>[\d]+)'])) {
-                    unset($endpoints['/wp/v2/users/(?P<id>[\d]+)']);
-                }
-                if (isset($endpoints['/wp/v2/users/me'])) {
-                    unset($endpoints['/wp/v2/users/me']);
-                }
-            }
-            return $endpoints;
-        });
-
-        // Require authentication for any user-related REST API request
+        // Require authentication for user-related REST API requests.
+        // We use rest_pre_dispatch because authentication cookies/nonces have been verified by this point,
+        // allowing authenticated users (such as the Gutenberg Block Editor accessing /wp/v2/users/me)
+        // to function properly, while rejecting all unauthenticated/bot access.
         add_filter('rest_pre_dispatch', function ($result, $server, $request) {
             $route = $request->get_route();
             if (strpos($route, '/wp/v2/users') === 0 && !is_user_logged_in()) {

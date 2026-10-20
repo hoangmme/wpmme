@@ -18,8 +18,15 @@ class WPMME_Media_Replace {
     }
 
     public function enqueue_assets($hook) {
-        // Only load on media pages
-        if (!in_array($hook, array('upload.php', 'post.php'))) {
+        // Only load on media library page or when editing an attachment post
+        if ($hook === 'upload.php') {
+            // Media library grid / list
+        } elseif ($hook === 'post.php') {
+            $post = get_post();
+            if (!$post || $post->post_type !== 'attachment') {
+                return;
+            }
+        } else {
             return;
         }
 
