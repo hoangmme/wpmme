@@ -3,7 +3,7 @@
  * Plugin Name: MMe Core
  * Plugin URI: https://mme.vn
  * Description: All-in-One Optimization & Security plugin by MMe.
- * Version: 1.0.0 (Build 20260628.1505)
+ * Version: 1.0.0 (Build 20261027.1550)
  * Author: Hoji
  * Author URI: https://mme.vn
  * Text Domain: wpmme
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
 }
 
 define('WPMME_VERSION', '1.0.0');
-define('WPMME_BUILD', '20261020.2330');
+define('WPMME_BUILD', '20261027.1550');
 define('WPMME_DIR', plugin_dir_path(__FILE__));
 define('WPMME_URL', plugin_dir_url(__FILE__));
 

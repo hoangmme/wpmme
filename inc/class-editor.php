@@ -11,6 +11,7 @@ class WPMME_Editor {
 
         // Remove Gutenberg styles
         add_action('wp_enqueue_scripts', array($this, 'remove_block_styles'), 100);
+        add_action('wp_head', array($this, 'frontend_alignment_styles'));
 
         // Add editor styles
         add_filter('mce_css', array($this, 'add_editor_style'));
@@ -24,6 +25,15 @@ class WPMME_Editor {
         wp_dequeue_style('wp-block-library-theme');
         wp_dequeue_style('wc-blocks-style');
         wp_dequeue_style('global-styles');
+    }
+
+    public function frontend_alignment_styles() {
+        echo '<style id="wpmme-align-styles">
+.aligncenter, img.aligncenter, figure.aligncenter { display: block; margin-left: auto; margin-right: auto; }
+.alignleft, img.alignleft { float: left; margin: 0 1.5em 1em 0; }
+.alignright, img.alignright { float: right; margin: 0 0 1em 1.5em; }
+.alignnone, img.alignnone { float: none; margin: 0; }
+</style>' . "\n";
     }
 
     public function add_editor_style($mce_css) {

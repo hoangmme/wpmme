@@ -29,6 +29,31 @@ body.wpmme-editor img {
     height: auto;
 }
 
+body.wpmme-editor .aligncenter,
+body.wpmme-editor img.aligncenter {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+body.wpmme-editor .alignleft,
+body.wpmme-editor img.alignleft {
+    float: left;
+    margin: 0 1.5em 1em 0;
+}
+
+body.wpmme-editor .alignright,
+body.wpmme-editor img.alignright {
+    float: right;
+    margin: 0 0 1em 1.5em;
+}
+
+body.wpmme-editor .alignnone,
+body.wpmme-editor img.alignnone {
+    float: none;
+    margin: 0;
+}
+
 body.wpmme-editor blockquote {
     border-left: 4px solid #ccc;
     margin-left: 0;

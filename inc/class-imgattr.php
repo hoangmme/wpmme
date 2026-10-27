@@ -45,8 +45,30 @@ class WPMME_ImgAttr {
                 $alt = trim(stripslashes($alt_matches[1]), "\"'\\ ");
             }
 
+            // Preserve essential WordPress alignment and attachment classes
+            $class_attr = '';
+            if (preg_match('/class=["\']([^"\']*)["\']/i', $img_tag, $class_matches)) {
+                $raw_classes = preg_split('/\s+/', trim($class_matches[1]));
+                $preserved_classes = array();
+                foreach ($raw_classes as $cls) {
+                    $cls = trim($cls);
+                    if (empty($cls)) {
+                        continue;
+                    }
+                    if (in_array($cls, array('aligncenter', 'alignleft', 'alignright', 'alignnone'), true) || preg_match('/^wp-image-\d+$/', $cls)) {
+                        $preserved_classes[] = $cls;
+                    }
+                }
+                if (!empty($preserved_classes)) {
+                    $class_attr = implode(' ', array_unique($preserved_classes));
+                }
+            }
+
             // Rebuild img tag
             $new_img = '<img';
+            if (!empty($class_attr)) {
+                $new_img .= ' class="' . esc_attr($class_attr) . '"';
+            }
             if (!empty($src)) {
                 $new_img .= ' src="' . esc_attr($src) . '"';
             }
