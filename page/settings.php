@@ -433,7 +433,7 @@ $options = wpmme_get_options();
             <div class="wpmme-card-header">
                 <div class="wpmme-card-info">
                     <h3>Monthly Auto Backup</h3>
-                    <p>Automatically backup your database &amp; wp-content every month. Keeps the latest 2 backups.</p>
+                    <p>Automatically backup your database &amp; full source code (excluding uploads) every month. Keeps the latest 2 backups.</p>
                 </div>
                 <label class="wpmme-switch">
                     <input type="checkbox" name="monthly_backup" id="toggle-monthly-backup" <?php checked($options['monthly_backup']); ?>>

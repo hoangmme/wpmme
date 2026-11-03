@@ -129,7 +129,10 @@ class WPMME_Backup {
     }
 
     /**
-     * Create a full backup (database SQL + wp-content).
+     * Create a full backup (database SQL + entire WordPress source, excluding uploads).
+     *
+     * Includes: WordPress core, wp-config.php, .htaccess, themes, plugins, mu-plugins, etc.
+     * Excludes: wp-content/uploads (media files — too large), cache, backup dirs.
      *
      * @return true|\WP_Error
      */
@@ -176,18 +179,26 @@ class WPMME_Backup {
         // Add SQL dump
         $zip->addFile($sql_file, 'database.sql');
 
-        // Add wp-content (themes, plugins, uploads) — skip heavy dirs for performance
-        $wp_content_dir = WP_CONTENT_DIR;
-        $this->add_directory_to_zip($zip, $wp_content_dir, 'wp-content', array(
-            'cache',
-            'upgrade',
-            'wpmme-backups', // don't include backups of backups
-            'ai1wm-backups',
-            'updraft',
-            'backup',
-            'backups',
-            'debug.log',
-        ));
+        // Step 3: Add entire WordPress root (ABSPATH), excluding uploads & heavy dirs
+        $abspath = untrailingslashit(ABSPATH);
+
+        // Resolve the uploads dir relative to ABSPATH for exclusion
+        $upload_dir = wp_upload_dir();
+        $uploads_rel = str_replace($abspath . '/', '', $upload_dir['basedir']); // e.g. "wp-content/uploads"
+
+        $exclude_dirs = array(
+            $uploads_rel,                           // wp-content/uploads (media — too large)
+            'wp-content/cache',
+            'wp-content/upgrade',
+            'wp-content/wpmme-backups',             // our own backup dir
+            'wp-content/ai1wm-backups',
+            'wp-content/updraft',
+            'wp-content/backup',
+            'wp-content/backups',
+            'wp-content/debug.log',
+        );
+
+        $this->add_directory_to_zip($zip, $abspath, 'wordpress', $exclude_dirs);
 
         $zip->close();
 
@@ -270,13 +281,19 @@ class WPMME_Backup {
     }
 
     /**
-     * Recursively add a directory to a ZipArchive, skipping excluded names.
+     * Recursively add a directory to a ZipArchive, skipping excluded paths.
+     *
+     * @param ZipArchive $zip
+     * @param string     $dir_path  Absolute path to the directory to add.
+     * @param string     $zip_base  Base path inside the ZIP (e.g. "wordpress").
+     * @param array      $exclude   Relative paths to exclude (e.g. "wp-content/uploads").
      */
     private function add_directory_to_zip($zip, $dir_path, $zip_base, $exclude = array()) {
         if (!is_dir($dir_path)) {
             return;
         }
 
+        $dir_path = rtrim($dir_path, '/');
         $iterator = new RecursiveDirectoryIterator($dir_path, RecursiveDirectoryIterator::SKIP_DOTS);
         $files = new RecursiveIteratorIterator($iterator, RecursiveIteratorIterator::SELF_FIRST);
 
@@ -286,12 +303,11 @@ class WPMME_Backup {
 
         foreach ($files as $file) {
             $relative = str_replace($dir_path . '/', '', $file->getPathname());
-            $parts = explode('/', $relative);
 
-            // Skip excluded directories/files
+            // Skip excluded paths — match if relative path starts with any exclusion entry
             $skip = false;
             foreach ($exclude as $ex) {
-                if (in_array($ex, $parts) || $parts[0] === $ex) {
+                if ($relative === $ex || strpos($relative, $ex . '/') === 0) {
                     $skip = true;
                     break;
                 }
