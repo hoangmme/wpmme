@@ -472,7 +472,7 @@ $options = wpmme_get_options();
                                     <th>Date</th>
                                     <th>Filename</th>
                                     <th>Size</th>
-                                    <th style="width:140px;">Actions</th>
+                                    <th style="width:220px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -482,6 +482,7 @@ $options = wpmme_get_options();
                                     <td><code><?php echo esc_html($b['filename']); ?></code></td>
                                     <td><?php echo esc_html($b['size_human']); ?></td>
                                     <td>
+                                        <button type="button" class="button button-small button-primary wpmme-restore-backup" data-filename="<?php echo esc_attr($b['filename']); ?>">Restore</button>
                                         <a href="<?php echo esc_url(admin_url('admin-ajax.php?action=wpmme_download_backup&nonce=' . wp_create_nonce('wpmme_nonce') . '&filename=' . urlencode($b['filename']))); ?>" class="button button-small">Download</a>
                                         <button type="button" class="button button-small button-link-delete wpmme-delete-backup" data-filename="<?php echo esc_attr($b['filename']); ?>">Delete</button>
                                     </td>

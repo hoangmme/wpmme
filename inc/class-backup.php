@@ -12,6 +12,7 @@ class WPMME_Backup {
         add_action('wp_ajax_wpmme_manual_backup', array($this, 'handle_manual_backup'));
         add_action('wp_ajax_wpmme_delete_backup', array($this, 'handle_delete_backup'));
         add_action('wp_ajax_wpmme_download_backup', array($this, 'handle_download_backup'));
+        add_action('wp_ajax_wpmme_restore_backup', array($this, 'handle_restore_backup'));
         add_action(self::CRON_HOOK, array($this, 'run_scheduled_backup'));
     }
 
@@ -126,6 +127,179 @@ class WPMME_Backup {
         header('Content-Length: ' . filesize($filepath));
         readfile($filepath);
         exit;
+    }
+
+    /**
+     * AJAX: Restore from a backup ZIP.
+     *
+     * 1. Extract ZIP to a temp directory
+     * 2. Restore database from database.sql
+     * 3. Restore source files from wordpress/ folder (skip uploads)
+     */
+    public function handle_restore_backup() {
+        check_ajax_referer('wpmme_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Permission denied.');
+        }
+
+        // Extend limits for large restores
+        @set_time_limit(600);
+        @ini_set('memory_limit', '512M');
+
+        $filename = isset($_POST['filename']) ? sanitize_file_name($_POST['filename']) : '';
+        if (empty($filename)) {
+            wp_send_json_error('Missing filename.');
+        }
+
+        $dir = self::get_backup_dir();
+        $filepath = $dir . $filename;
+
+        if (!file_exists($filepath)) {
+            wp_send_json_error('Backup file not found.');
+        }
+
+        if (!class_exists('ZipArchive')) {
+            wp_send_json_error('ZipArchive extension is not available.');
+        }
+
+        // Step 1: Extract ZIP to temp dir
+        $temp_dir = get_temp_dir() . 'wpmme_restore_' . time() . '/';
+        wp_mkdir_p($temp_dir);
+
+        $zip = new ZipArchive();
+        if ($zip->open($filepath) !== true) {
+            wp_send_json_error('Could not open backup ZIP file.');
+        }
+        $zip->extractTo($temp_dir);
+        $zip->close();
+
+        $errors = array();
+
+        // Step 2: Restore database if database.sql exists
+        $sql_file = $temp_dir . 'database.sql';
+        if (file_exists($sql_file)) {
+            $db_result = $this->restore_database($sql_file);
+            if (is_wp_error($db_result)) {
+                $errors[] = 'Database: ' . $db_result->get_error_message();
+            }
+        }
+
+        // Step 3: Restore source files
+        $source_dir = $temp_dir . 'wordpress/';
+        if (is_dir($source_dir)) {
+            require_once ABSPATH . 'wp-admin/includes/file.php';
+            WP_Filesystem();
+            global $wp_filesystem;
+
+            $abspath = untrailingslashit(ABSPATH);
+
+            // Copy files from extracted backup, skipping uploads dir
+            $upload_dir = wp_upload_dir();
+            $uploads_rel = str_replace($abspath . '/', '', $upload_dir['basedir']);
+
+            $iterator = new RecursiveDirectoryIterator($source_dir, RecursiveDirectoryIterator::SKIP_DOTS);
+            $files = new RecursiveIteratorIterator($iterator, RecursiveIteratorIterator::SELF_FIRST);
+
+            foreach ($files as $file) {
+                $relative = str_replace($source_dir, '', $file->getPathname());
+
+                // Skip uploads directory during restore (keep existing media)
+                if (strpos($relative, $uploads_rel) === 0) {
+                    continue;
+                }
+                // Skip backup dir itself
+                if (strpos($relative, 'wp-content/wpmme-backups') === 0) {
+                    continue;
+                }
+
+                $target = $abspath . '/' . $relative;
+
+                if ($file->isDir()) {
+                    wp_mkdir_p($target);
+                } else {
+                    $target_dir = dirname($target);
+                    if (!is_dir($target_dir)) {
+                        wp_mkdir_p($target_dir);
+                    }
+                    @copy($file->getPathname(), $target);
+                }
+            }
+        } else {
+            $errors[] = 'Source files folder (wordpress/) not found in backup.';
+        }
+
+        // Clean up temp dir
+        $this->delete_directory($temp_dir);
+
+        if (!empty($errors)) {
+            wp_send_json_error('Restore completed with errors: ' . implode(' | ', $errors));
+        }
+
+        wp_send_json_success(array(
+            'message' => 'Restore completed successfully! The page will reload.',
+        ));
+    }
+
+    /**
+     * Restore database from a SQL dump file line-by-line to save memory.
+     *
+     * @param string $sql_file Path to the .sql file.
+     * @return true|\WP_Error
+     */
+    private function restore_database($sql_file) {
+        global $wpdb;
+
+        $handle = @fopen($sql_file, 'r');
+        if (!$handle) {
+            return new WP_Error('db_read', 'Could not open SQL file.');
+        }
+
+        $wpdb->query('SET FOREIGN_KEY_CHECKS = 0');
+
+        $query = '';
+        while (($line = fgets($handle)) !== false) {
+            $trimmed = trim($line);
+            if (empty($trimmed) || strpos($trimmed, '--') === 0 || strpos($trimmed, '/*') === 0) {
+                continue;
+            }
+
+            $query .= $line;
+
+            // End of SQL statement
+            if (substr($trimmed, -1) === ';') {
+                $wpdb->query($query);
+                $query = '';
+            }
+        }
+
+        if (!empty(trim($query))) {
+            $wpdb->query($query);
+        }
+
+        fclose($handle);
+        $wpdb->query('SET FOREIGN_KEY_CHECKS = 1');
+
+        return true;
+    }
+
+    /**
+     * Recursively delete a directory.
+     */
+    private function delete_directory($dir) {
+        if (!is_dir($dir)) {
+            return;
+        }
+        $items = new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS);
+        $files = new RecursiveIteratorIterator($items, RecursiveIteratorIterator::CHILD_FIRST);
+        foreach ($files as $file) {
+            if ($file->isDir()) {
+                @rmdir($file->getPathname());
+            } else {
+                @unlink($file->getPathname());
+            }
+        }
+        @rmdir($dir);
     }
 
     /**

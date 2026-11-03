@@ -133,6 +133,50 @@ jQuery(document).ready(function($) {
         });
     });
 
+    // Restore Backup (2-step confirm)
+    $(document).on('click', '.wpmme-restore-backup', function() {
+        var $btn = $(this);
+        var filename = $btn.data('filename');
+
+        var confirm1 = confirm('⚠️ CẢNH BÁO QUAN TRỌNG:\n\nKhôi phục bản backup "' + filename + '" sẽ GHI ĐÈ toàn bộ cơ sở dữ liệu (Database) và mã nguồn website hiện tại.\n\nBạn có chắc chắn muốn tiếp tục không?');
+        if (!confirm1) {
+            return;
+        }
+
+        var confirm2 = confirm('XÁC NHẬN LẦN CUỐI:\n\nQuá trình này KHÔNG THỂ HOÀN TÁC và có thể mất từ 1-3 phút.\n\nNhấn OK để bắt đầu khôi phục ngay!');
+        if (!confirm2) {
+            return;
+        }
+
+        var originalText = $btn.text();
+        $btn.prop('disabled', true).text('⏳ Restoring...');
+        $('.wpmme-restore-backup, .wpmme-delete-backup, #btn-manual-backup').prop('disabled', true);
+        var $status = $('#backup-status');
+        $status.css('color', '#2271b1').text('⏳ Đang khôi phục hệ thống từ backup, vui lòng KHÔNG tắt trình duyệt...');
+
+        $.post(wpmme_ajax.url, {
+            action: 'wpmme_restore_backup',
+            nonce: wpmme_ajax.nonce,
+            filename: filename
+        }, function(response) {
+            if (response.success) {
+                $status.css('color', '#46b450').text('✅ ' + response.data.message);
+                alert(response.data.message);
+                location.reload();
+            } else {
+                $status.css('color', '#d63638').text('❌ ' + response.data);
+                alert('Lỗi khôi phục: ' + response.data);
+                $btn.prop('disabled', false).text(originalText);
+                $('.wpmme-restore-backup, .wpmme-delete-backup, #btn-manual-backup').prop('disabled', false);
+            }
+        }).fail(function() {
+            $status.css('color', '#d63638').text('❌ Lỗi kết nối máy chủ.');
+            alert('Lỗi kết nối máy chủ trong quá trình khôi phục.');
+            $btn.prop('disabled', false).text(originalText);
+            $('.wpmme-restore-backup, .wpmme-delete-backup, #btn-manual-backup').prop('disabled', false);
+        });
+    });
+
     // Re-render backup table from AJAX data
     function renderBackupTable(backups) {
         var $wrap = $('#wpmme-backup-list-wrap');
@@ -152,7 +196,7 @@ jQuery(document).ready(function($) {
         // Build or update table
         var nonce = wpmme_ajax.nonce;
         var html = '<table class="widefat striped" id="wpmme-backup-table" style="margin-top:8px;">' +
-            '<thead><tr><th>Date</th><th>Filename</th><th>Size</th><th style="width:140px;">Actions</th></tr></thead><tbody>';
+            '<thead><tr><th>Date</th><th>Filename</th><th>Size</th><th style="width:220px;">Actions</th></tr></thead><tbody>';
 
         $.each(backups, function(i, b) {
             var dlUrl = wpmme_ajax.url + '?action=wpmme_download_backup&nonce=' + nonce + '&filename=' + encodeURIComponent(b.filename);
@@ -161,6 +205,7 @@ jQuery(document).ready(function($) {
                 '<td><code>' + b.filename + '</code></td>' +
                 '<td>' + b.size_human + '</td>' +
                 '<td>' +
+                '<button type="button" class="button button-small button-primary wpmme-restore-backup" data-filename="' + b.filename + '">Restore</button> ' +
                 '<a href="' + dlUrl + '" class="button button-small">Download</a> ' +
                 '<button type="button" class="button button-small button-link-delete wpmme-delete-backup" data-filename="' + b.filename + '">Delete</button>' +
                 '</td></tr>';

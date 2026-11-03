@@ -294,6 +294,11 @@ input:checked + .wpmme-slider:before {
     border-radius: 3px;
 }
 
+#wpmme-backup-table td .button {
+    margin-right: 4px;
+    margin-bottom: 2px;
+}
+
 #wpmme-backup-table .button-link-delete {
     color: #b32d2e;
 }
