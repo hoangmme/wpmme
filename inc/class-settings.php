@@ -24,7 +24,7 @@ class WPMME_Settings {
             'remove_version', 'disable_rest_users', 'disable_author',
             'disable_comments', 'login_logo', 'login_slug',
             'media_replace', 'admin_bar_clean', 'limit_login', 'disable_password_reset',
-            'block_php_uploads'
+            'block_php_uploads', 'monthly_backup'
         );
 
         foreach ($checkbox_fields as $field) {
@@ -70,6 +70,9 @@ class WPMME_Settings {
         } else {
             WPMME_Security::remove_block_php_uploads();
         }
+
+        // Sync monthly backup cron schedule
+        WPMME_Backup::sync_cron_schedule(!empty($options['monthly_backup']));
 
         wp_send_json_success('Settings saved successfully.');
     }

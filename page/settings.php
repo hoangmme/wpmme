@@ -427,6 +427,73 @@ $options = wpmme_get_options();
             </div>
         </div>
 
+        <h2 class="wpmme-section-title"><span class="dashicons dashicons-backup"></span> Backup</h2>
+
+        <div class="wpmme-card has-body">
+            <div class="wpmme-card-header">
+                <div class="wpmme-card-info">
+                    <h3>Monthly Auto Backup</h3>
+                    <p>Automatically backup your database &amp; wp-content every month. Keeps the latest 2 backups.</p>
+                </div>
+                <label class="wpmme-switch">
+                    <input type="checkbox" name="monthly_backup" id="toggle-monthly-backup" <?php checked($options['monthly_backup']); ?>>
+                    <span class="wpmme-slider"></span>
+                </label>
+            </div>
+            <div class="wpmme-card-body" id="body-monthly-backup" <?php echo $options['monthly_backup'] ? '' : 'style="display:none;"'; ?>>
+                <?php
+                $next_scheduled = WPMME_Backup::get_next_scheduled();
+                if ($next_scheduled) :
+                    $next_date = date_i18n('d/m/Y H:i:s', $next_scheduled + (get_option('gmt_offset') * 3600));
+                ?>
+                    <div class="wpmme-form-group">
+                        <p>⏰ <strong>Next scheduled backup:</strong> <?php echo esc_html($next_date); ?></p>
+                    </div>
+                <?php else : ?>
+                    <div class="wpmme-form-group">
+                        <p class="description">💡 Save settings to schedule the first monthly backup.</p>
+                    </div>
+                <?php endif; ?>
+
+                <div class="wpmme-form-group">
+                    <button type="button" class="button wpmme-btn-action" id="btn-manual-backup">📦 Backup Now</button>
+                    <span id="backup-status" style="margin-left:10px;"></span>
+                </div>
+
+                <?php $backups = WPMME_Backup::get_backup_list(); ?>
+                <div class="wpmme-form-group" id="wpmme-backup-list-wrap">
+                    <label>Backup History (max <?php echo WPMME_Backup::MAX_BACKUPS; ?>)</label>
+                    <?php if (empty($backups)) : ?>
+                        <p class="description" id="no-backup-msg">No backups yet.</p>
+                    <?php else : ?>
+                        <table class="widefat striped" id="wpmme-backup-table" style="margin-top:8px;">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Filename</th>
+                                    <th>Size</th>
+                                    <th style="width:140px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($backups as $b) : ?>
+                                <tr data-filename="<?php echo esc_attr($b['filename']); ?>">
+                                    <td><?php echo esc_html($b['date']); ?></td>
+                                    <td><code><?php echo esc_html($b['filename']); ?></code></td>
+                                    <td><?php echo esc_html($b['size_human']); ?></td>
+                                    <td>
+                                        <a href="<?php echo esc_url(admin_url('admin-ajax.php?action=wpmme_download_backup&nonce=' . wp_create_nonce('wpmme_nonce') . '&filename=' . urlencode($b['filename']))); ?>" class="button button-small">Download</a>
+                                        <button type="button" class="button button-small button-link-delete wpmme-delete-backup" data-filename="<?php echo esc_attr($b['filename']); ?>">Delete</button>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
         <h2 class="wpmme-section-title"><span class="dashicons dashicons-update"></span> Plugin Updates</h2>
         
         <div class="wpmme-card has-body">

@@ -82,6 +82,99 @@ jQuery(document).ready(function($) {
     setupMediaUploader('#btn-upload-watermark', '#watermark_img');
     setupMediaUploader('#btn-upload-logo', '#login_logo_url');
 
+    // ==============================
+    // Backup Feature
+    // ==============================
+
+    // Manual Backup
+    $('#btn-manual-backup').on('click', function() {
+        var $btn = $(this);
+        var $status = $('#backup-status');
+        if (!confirm('Create a full backup now? This may take a few minutes.')) {
+            return;
+        }
+        $btn.prop('disabled', true).text('⏳ Backing up...');
+        $status.text('');
+
+        $.post(wpmme_ajax.url, {
+            action: 'wpmme_manual_backup',
+            nonce: wpmme_ajax.nonce
+        }, function(response) {
+            $btn.prop('disabled', false).text('📦 Backup Now');
+            if (response.success) {
+                $status.css('color', '#46b450').text('✅ ' + response.data.message);
+                renderBackupTable(response.data.backups);
+            } else {
+                $status.css('color', '#d63638').text('❌ ' + response.data);
+            }
+        }).fail(function() {
+            $btn.prop('disabled', false).text('📦 Backup Now');
+            $status.css('color', '#d63638').text('❌ Server error.');
+        });
+    });
+
+    // Delete Backup
+    $(document).on('click', '.wpmme-delete-backup', function() {
+        var filename = $(this).data('filename');
+        if (!confirm('Delete backup "' + filename + '"?')) {
+            return;
+        }
+
+        $.post(wpmme_ajax.url, {
+            action: 'wpmme_delete_backup',
+            nonce: wpmme_ajax.nonce,
+            filename: filename
+        }, function(response) {
+            if (response.success) {
+                renderBackupTable(response.data.backups);
+            } else {
+                alert('Error: ' + response.data);
+            }
+        });
+    });
+
+    // Re-render backup table from AJAX data
+    function renderBackupTable(backups) {
+        var $wrap = $('#wpmme-backup-list-wrap');
+        var $table = $wrap.find('#wpmme-backup-table');
+        var $noMsg = $wrap.find('#no-backup-msg');
+
+        if (!backups || backups.length === 0) {
+            $table.remove();
+            if ($noMsg.length === 0) {
+                $wrap.append('<p class="description" id="no-backup-msg">No backups yet.</p>');
+            }
+            return;
+        }
+
+        $noMsg.remove();
+
+        // Build or update table
+        var nonce = wpmme_ajax.nonce;
+        var html = '<table class="widefat striped" id="wpmme-backup-table" style="margin-top:8px;">' +
+            '<thead><tr><th>Date</th><th>Filename</th><th>Size</th><th style="width:140px;">Actions</th></tr></thead><tbody>';
+
+        $.each(backups, function(i, b) {
+            var dlUrl = wpmme_ajax.url + '?action=wpmme_download_backup&nonce=' + nonce + '&filename=' + encodeURIComponent(b.filename);
+            html += '<tr data-filename="' + b.filename + '">' +
+                '<td>' + b.date + '</td>' +
+                '<td><code>' + b.filename + '</code></td>' +
+                '<td>' + b.size_human + '</td>' +
+                '<td>' +
+                '<a href="' + dlUrl + '" class="button button-small">Download</a> ' +
+                '<button type="button" class="button button-small button-link-delete wpmme-delete-backup" data-filename="' + b.filename + '">Delete</button>' +
+                '</td></tr>';
+        });
+
+        html += '</tbody></table>';
+
+        if ($table.length) {
+            $table.replaceWith(html);
+        } else {
+            $wrap.append(html);
+        }
+    }
+
     // Bulk Operations Modal
     var currentAction = '';
     

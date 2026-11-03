@@ -3,7 +3,7 @@
  * Plugin Name: MMe Core
  * Plugin URI: https://mme.vn
  * Description: All-in-One Optimization & Security plugin by MMe.
- * Version: 1.0.0 (Build 20261027.1550)
+ * Version: 1.0.0 (Build 20261103.1135)
  * Author: Hoji
  * Author URI: https://mme.vn
  * Text Domain: wpmme
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
 }
 
 define('WPMME_VERSION', '1.0.0');
-define('WPMME_BUILD', '20261027.1550');
+define('WPMME_BUILD', '20261103.1135');
 define('WPMME_DIR', plugin_dir_path(__FILE__));
 define('WPMME_URL', plugin_dir_url(__FILE__));
 
@@ -39,6 +39,7 @@ require_once WPMME_DIR . 'inc/class-limit-login.php';
 require_once WPMME_DIR . 'inc/class-media-replace.php';
 require_once WPMME_DIR . 'inc/class-media-tabs.php';
 require_once WPMME_DIR . 'inc/class-updater.php';
+require_once WPMME_DIR . 'inc/class-backup.php';
 require_once WPMME_DIR . 'inc/class-cli.php';
 
 // Initialize Plugin
@@ -100,8 +101,12 @@ function wpmme_init() {
     }
     
     new WPMME_Updater();
+    new WPMME_Backup($options);
 }
 add_action('plugins_loaded', 'wpmme_init');
+
+// Register monthly cron interval
+add_filter('cron_schedules', array('WPMME_Backup', 'register_cron_interval'));
 
 // Activation Hook
 register_activation_hook(__FILE__, 'wpmme_activate');
@@ -122,7 +127,11 @@ function wpmme_activate() {
 // Deactivation Hook
 register_deactivation_hook(__FILE__, 'wpmme_deactivate');
 function wpmme_deactivate() {
-    // Optional cleanup
+    // Unschedule monthly backup cron
+    $next = wp_next_scheduled('wpmme_monthly_backup');
+    if ($next) {
+        wp_unschedule_event($next, 'wpmme_monthly_backup');
+    }
 }
 
 // Helper function to get options with defaults
@@ -170,6 +179,7 @@ function wpmme_get_default_options() {
         'admin_bar_clean'      => true,
         'hide_notices'         => true,
         'limit_login'          => true,
+        'monthly_backup'       => false,
     );
 }
 
