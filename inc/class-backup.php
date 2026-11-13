@@ -48,7 +48,12 @@ class WPMME_Backup {
      * Cron callback — run backup and enforce retention.
      */
     public function run_scheduled_backup() {
-        $this->create_backup();
+        $result = $this->create_backup();
+        if (is_wp_error($result)) {
+            WPMME_Log::add('error', 'backup', 'Scheduled backup failed: ' . $result->get_error_message());
+        } else {
+            WPMME_Log::add('success', 'backup', 'Scheduled backup created.');
+        }
         $this->enforce_retention();
     }
 
@@ -65,9 +70,11 @@ class WPMME_Backup {
         $result = $this->create_backup();
 
         if (is_wp_error($result)) {
+            WPMME_Log::add('error', 'backup', 'Manual backup failed: ' . $result->get_error_message());
             wp_send_json_error($result->get_error_message());
         }
 
+        WPMME_Log::add('success', 'backup', 'Manual backup created.');
         $this->enforce_retention();
 
         wp_send_json_success(array(
@@ -233,8 +240,11 @@ class WPMME_Backup {
         $this->delete_directory($temp_dir);
 
         if (!empty($errors)) {
+            WPMME_Log::add('error', 'backup', 'Restore completed with errors.', array('errors' => array_slice($errors, 0, 10)));
             wp_send_json_error('Restore completed with errors: ' . implode(' | ', $errors));
         }
+
+        WPMME_Log::add('success', 'backup', 'Backup restored.');
 
         wp_send_json_success(array(
             'message' => 'Restore completed successfully! The page will reload.',

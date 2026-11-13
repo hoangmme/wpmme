@@ -236,17 +236,17 @@ jQuery(document).ready(function($) {
     });
 
     $('#btn-force-update').on('click', function() {
-        if (confirm('Are you sure you want to download and overwrite the plugin with the latest version from GitHub?')) {
+        if (confirm('Download the main branch from GitHub and overwrite the MMe Core files?')) {
             var $btn = $(this);
             var originalText = $btn.text();
-            $btn.text('Downloading & Updating... Please wait').prop('disabled', true);
+            $btn.text('Downloading & installing... Please wait').prop('disabled', true);
 
             $.post(wpmme_ajax.url, {
                 action: 'wpmme_force_update',
                 nonce: wpmme_ajax.nonce
             }, function(response) {
                 if (response.success) {
-                    $btn.text('Update successful! Reloading...');
+                    $btn.text('Reinstalled ' + (response.data && response.data.version ? response.data.version : '') + '. Reloading...');
                     setTimeout(function() { location.reload(); }, 1500);
                 } else {
                     alert('Update failed: ' + response.data);

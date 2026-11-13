@@ -3,7 +3,7 @@
  * Plugin Name: MMe Core
  * Plugin URI: https://mme.vn
  * Description: All-in-One Optimization & Security plugin by MMe.
- * Version: 1.0.1 (Build 20261113.1241)
+ * Version: 1.1.0 (Build 20261113.1332)
  * Author: Hoji
  * Author URI: https://mme.vn
  * Text Domain: wpmme
@@ -15,12 +15,14 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('WPMME_VERSION', '1.0.1');
-define('WPMME_BUILD', '20261113.1241');
+define('WPMME_VERSION', '1.1.0');
+define('WPMME_BUILD', '20261113.1332');
 define('WPMME_DIR', plugin_dir_path(__FILE__));
 define('WPMME_URL', plugin_dir_url(__FILE__));
+define('WPMME_BASENAME', plugin_basename(__FILE__));
 
 // Load Feature Classes
+require_once WPMME_DIR . 'inc/class-log.php';
 require_once WPMME_DIR . 'inc/class-settings.php';
 require_once WPMME_DIR . 'inc/class-editor.php';
 require_once WPMME_DIR . 'inc/class-tinymce.php';
@@ -40,6 +42,7 @@ require_once WPMME_DIR . 'inc/class-media-replace.php';
 require_once WPMME_DIR . 'inc/class-media-tabs.php';
 require_once WPMME_DIR . 'inc/class-updater.php';
 require_once WPMME_DIR . 'inc/class-backup.php';
+require_once WPMME_DIR . 'inc/class-cache-warmer.php';
 require_once WPMME_DIR . 'inc/class-cli.php';
 
 // Initialize Plugin
@@ -100,7 +103,8 @@ function wpmme_init() {
         new WPMME_Media_Tabs();
     }
     
-    new WPMME_Updater();
+    WPMME_Updater::instance();
+    WPMME_Cache_Warmer::instance();
     new WPMME_Backup($options);
 }
 add_action('plugins_loaded', 'wpmme_init');
@@ -122,6 +126,9 @@ function wpmme_activate() {
     if (!empty($options['block_php_uploads'])) {
         WPMME_Security::apply_block_php_uploads();
     }
+
+    // Restore the daily cache warmer schedule if it was on
+    WPMME_Cache_Warmer::sync_schedule();
 }
 
 // Deactivation Hook
@@ -132,6 +139,9 @@ function wpmme_deactivate() {
     if ($next) {
         wp_unschedule_event($next, 'wpmme_monthly_backup');
     }
+
+    // Unschedule the daily cache warmer (re-scheduled from its settings on reactivation)
+    WPMME_Cache_Warmer::unschedule();
 }
 
 // Helper function to get options with defaults
@@ -186,35 +196,63 @@ function wpmme_get_default_options() {
 // Admin Menu
 add_action('admin_menu', 'wpmme_admin_menu');
 function wpmme_admin_menu() {
-    add_menu_page(
-        'MMe Core Settings',
-        'MMe Core',
-        'manage_options',
-        'wpmme-settings',
-        'wpmme_settings_page',
-        'dashicons-admin-generic',
-        80
-    );
+    $has_update = class_exists('WPMME_Updater') && WPMME_Updater::instance()->has_update(false);
+    $badge      = $has_update ? ' <span class="update-plugins count-1"><span class="plugin-count">1</span></span>' : '';
+
+    add_menu_page('MMe Core Settings', 'MMe Core' . $badge, 'manage_options', 'wpmme-settings', 'wpmme_settings_page', 'dashicons-admin-generic', 80);
+    add_submenu_page('wpmme-settings', 'MMe Core Settings', 'Settings', 'manage_options', 'wpmme-settings', 'wpmme_settings_page');
+    add_submenu_page('wpmme-settings', 'Cache Warmer', 'Cache Warmer', 'manage_options', 'wpmme-cache', 'wpmme_cache_page');
+    add_submenu_page('wpmme-settings', 'MMe Core Updates', 'Updates' . $badge, 'update_plugins', 'wpmme-updates', 'wpmme_updates_page');
+    add_submenu_page('wpmme-settings', 'MMe Core Logs', 'Logs', 'manage_options', 'wpmme-logs', 'wpmme_logs_page');
 }
 
 function wpmme_settings_page() {
     require_once WPMME_DIR . 'page/settings.php';
 }
 
+function wpmme_cache_page() {
+    require_once WPMME_DIR . 'page/cache-warmer.php';
+}
+
+function wpmme_updates_page() {
+    require_once WPMME_DIR . 'page/updates.php';
+}
+
+function wpmme_logs_page() {
+    require_once WPMME_DIR . 'page/logs.php';
+}
+
+/**
+ * Slug of the current MMe Core admin page, '' elsewhere.
+ *
+ * @return string
+ */
+function wpmme_current_page() {
+    $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
+    return in_array($page, array('wpmme-settings', 'wpmme-cache', 'wpmme-updates', 'wpmme-logs'), true) ? $page : '';
+}
+
 // Admin Enqueue
 add_action('admin_enqueue_scripts', 'wpmme_admin_assets');
 function wpmme_admin_assets($hook) {
-    if ($hook !== 'toplevel_page_wpmme-settings') {
+    $page = wpmme_current_page();
+    if (!$page) {
         return;
     }
 
-    wp_enqueue_media();
+    if ('wpmme-settings' === $page) {
+        wp_enqueue_media();
+    }
     wp_enqueue_style('wpmme-admin-css', WPMME_URL . 'assets/css/admin.css', array(), WPMME_VERSION);
     wp_enqueue_script('wpmme-admin-js', WPMME_URL . 'assets/js/admin.js', array('jquery'), WPMME_VERSION, true);
+    if ('wpmme-cache' === $page) {
+        wp_enqueue_script('wpmme-cache-warmer', WPMME_URL . 'assets/js/cache-warmer.js', array('jquery', 'wpmme-admin-js'), WPMME_VERSION, true);
+    }
 
     wp_localize_script('wpmme-admin-js', 'wpmme_ajax', array(
         'url'   => admin_url('admin-ajax.php'),
-        'nonce' => wp_create_nonce('wpmme_nonce')
+        'nonce' => wp_create_nonce('wpmme_nonce'),
+        'home'  => home_url('/'),
     ));
 
     // Dequeue known conflicting plugin scripts on our page
@@ -227,7 +265,7 @@ function wpmme_admin_assets($hook) {
 // Early polyfill for ACF / SCF to prevent inline JS errors on our custom page before body scripts run
 add_action('admin_head', 'wpmme_admin_early_polyfills', 1);
 function wpmme_admin_early_polyfills() {
-    if (!isset($_GET['page']) || $_GET['page'] !== 'wpmme-settings') {
+    if (!wpmme_current_page()) {
         return;
     }
     ?>

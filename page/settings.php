@@ -4,14 +4,11 @@ if (!defined('ABSPATH')) {
 }
 
 $options = wpmme_get_options();
+$wpmme_page  = 'wpmme-settings';
+$wpmme_title = 'MMe Core Settings';
 ?>
-<div class="wrap">
-    <!-- WordPress will automatically inject admin notices here -->
-</div>
 <div class="wpmme-wrap">
-    <div class="wpmme-header">
-        <h1>MMe Core Settings <span class="wpmme-version">v<?php echo WPMME_VERSION; ?></span> <span class="wpmme-build" style="font-size:12px;color:#666;font-weight:normal;">Build <?php echo WPMME_BUILD; ?></span></h1>
-    </div>
+    <?php require WPMME_DIR . 'page/partials/header.php'; ?>
 
     <form id="wpmme-settings-form">
         <!-- Editor Group -->
@@ -495,20 +492,7 @@ $options = wpmme_get_options();
             </div>
         </div>
 
-        <h2 class="wpmme-section-title"><span class="dashicons dashicons-update"></span> Plugin Updates</h2>
-        
-        <div class="wpmme-card has-body">
-            <div class="wpmme-card-header">
-                <div class="wpmme-card-info">
-                    <h3>Manual Update</h3>
-                    <p>Force the plugin to download and update to the latest code from GitHub main branch.</p>
-                </div>
-            </div>
-            <div class="wpmme-card-body">
-                <p class="description">Clicking the button below will download the latest ZIP from GitHub, extract it, and overwrite this plugin. Use with caution.</p>
-                <button type="button" class="button button-secondary wpmme-btn-action" id="btn-force-update">Pull Latest from GitHub</button>
-            </div>
-        </div>
+        <p class="description wpmme-moved">Plugin updates moved to <a href="<?php echo esc_url(admin_url('admin.php?page=wpmme-updates')); ?>">MMe Core → Updates</a>.</p>
 
     </form>
 </div>

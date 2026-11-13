@@ -312,3 +312,94 @@ input:checked + .wpmme-slider:before {
     font-size: 13px;
     vertical-align: middle;
 }
+
+/* ------------------------------------------------------------------ */
+/* 1.1.0: navigation, status, alerts, cache warmer, updates, logs      */
+/* ------------------------------------------------------------------ */
+.wpmme-wrap--wide { max-width: 1200px; }
+
+.wpmme-header { padding-bottom: 0; }
+.wpmme-header h1 { flex-wrap: wrap; gap: 4px 0; }
+.wpmme-build { font-size: 12px; color: #646970; font-weight: 400; margin-left: 10px; }
+
+.wpmme-nav { display: flex; gap: 4px; margin: 16px -30px 0; padding: 0 22px; border-top: 1px solid #f0f0f1; overflow-x: auto; }
+.wpmme-nav__item { display: inline-flex; align-items: center; gap: 6px; padding: 12px 10px; color: #50575e; text-decoration: none; font-weight: 500; border-bottom: 2px solid transparent; white-space: nowrap; }
+.wpmme-nav__item:hover { color: #2271b1; }
+.wpmme-nav__item:focus { box-shadow: none; outline: 2px solid #2271b1; outline-offset: -2px; }
+.wpmme-nav__item.is-active { color: #1d2327; border-bottom-color: #2271b1; }
+.wpmme-nav__item .dashicons { font-size: 18px; width: 18px; height: 18px; }
+.wpmme-nav__badge { background: #d63638; color: #fff; border-radius: 9px; font-size: 11px; line-height: 17px; min-width: 17px; padding: 0 5px; text-align: center; }
+
+.wpmme-status { display: flex; align-items: center; gap: 18px; background: #fff; border: 1px solid #e0e0e0; border-left: 4px solid #8c8f94; border-radius: 8px; padding: 18px 22px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+.wpmme-status.is-ok { border-left-color: #00a32a; }
+.wpmme-status.is-update { border-left-color: #2271b1; }
+.wpmme-status.is-error { border-left-color: #d63638; }
+.wpmme-status.is-off { border-left-color: #8c8f94; }
+.wpmme-status__icon { font-size: 30px; width: 30px; height: 30px; color: #8c8f94; }
+.wpmme-status.is-ok .wpmme-status__icon { color: #00a32a; }
+.wpmme-status.is-update .wpmme-status__icon { color: #2271b1; }
+.wpmme-status.is-error .wpmme-status__icon { color: #d63638; }
+.wpmme-status__body { flex: 1; min-width: 0; }
+.wpmme-status__label { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: #646970; font-weight: 600; }
+.wpmme-status__title { margin: 4px 0; font-size: 16px; font-weight: 400; line-height: 1.5; }
+.wpmme-status__meta { color: #646970; font-size: 13px; }
+.wpmme-status__actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.wpmme-status__actions form { margin: 0; }
+.wpmme-status__actions .button .dashicons, .wpmme-card .button .dashicons { font-size: 16px; width: 16px; height: 16px; vertical-align: text-bottom; margin-right: 2px; }
+@media screen and (max-width: 782px) {
+    .wpmme-status { flex-wrap: wrap; }
+    .wpmme-status__actions { width: 100%; justify-content: flex-start; }
+}
+
+.wpmme-alert { border-radius: 6px; padding: 12px 16px; margin: 0 0 20px; border: 1px solid; }
+.wpmme-alert--success { background: #edfaef; border-color: #b8e6bf; color: #1e4620; }
+.wpmme-alert--error { background: #fcf0f1; border-color: #f0b8bc; color: #691c1f; }
+.wpmme-alert--warning { background: #fcf9e8; border-color: #f0dc8c; color: #5c4a00; }
+.wpmme-alert--info { background: #f0f6fc; border-color: #b6d4ef; color: #0a3d68; }
+
+.wpmme-columns { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; align-items: start; }
+@media screen and (max-width: 960px) { .wpmme-columns { grid-template-columns: 1fr; } }
+.wpmme-changelog h4 { margin: 18px 0 6px; font-size: 14px; }
+.wpmme-changelog h4:first-child { margin-top: 0; }
+.wpmme-changelog ul { margin: 0 0 0 18px; list-style: disc; }
+.wpmme-changelog li { margin-bottom: 4px; }
+.wpmme-meta { margin: 0 0 12px; }
+.wpmme-meta li { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid #f0f0f1; margin: 0; }
+.wpmme-meta li span { color: #646970; }
+.wpmme-timeline { margin: 0 0 12px; }
+.wpmme-timeline li { padding: 6px 0 6px 12px; border-left: 3px solid #c3c4c7; margin: 0 0 6px; font-size: 13px; }
+.wpmme-timeline li span { display: block; color: #646970; font-size: 12px; }
+.wpmme-timeline li.is-success { border-left-color: #00a32a; }
+.wpmme-timeline li.is-error, .wpmme-timeline li.is-fatal { border-left-color: #d63638; }
+.wpmme-timeline li.is-info { border-left-color: #2271b1; }
+.wpmme-link { text-decoration: none; }
+.wpmme-empty { color: #646970; margin: 0; }
+.wpmme-moved { margin-top: 30px; }
+
+.wpmme-badge { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; background: #f0f0f1; color: #50575e; }
+.wpmme-badge--success { background: #edfaef; color: #00701a; }
+.wpmme-badge--info { background: #f0f6fc; color: #135e96; }
+.wpmme-badge--warning { background: #fcf9e8; color: #8a6d00; }
+.wpmme-badge--error, .wpmme-badge--fatal { background: #fcf0f1; color: #b32d2e; }
+.wpmme-text-error { color: #b32d2e; }
+
+.wpmme-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 14px; color: #646970; }
+.wpmme-filters__sep { width: 14px; }
+.wpmme-chip { padding: 3px 10px; border: 1px solid #dcdcde; border-radius: 14px; text-decoration: none; color: #50575e; font-size: 12px; background: #fff; }
+.wpmme-chip:hover { border-color: #2271b1; color: #2271b1; }
+.wpmme-chip.is-active { background: #2271b1; border-color: #2271b1; color: #fff; }
+.wpmme-log-table td { vertical-align: top; }
+.wpmme-log-table small { color: #8c8f94; }
+.wpmme-log-ctx summary { cursor: pointer; color: #2271b1; font-size: 12px; margin-top: 4px; }
+.wpmme-log-ctx pre { white-space: pre-wrap; word-break: break-all; background: #f6f7f7; padding: 8px; border-radius: 4px; font-size: 12px; margin: 6px 0 0; }
+
+.wpmme-inline { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.wpmme-inline > label { margin: 0; }
+.wpmme-check { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.wpmme-count { color: #646970; font-weight: 400; }
+.wpmme-cache-table { margin-top: 14px; }
+.wpmme-cache-table td { word-break: break-all; }
+.wpmme-footer__msg { align-self: center; color: #50575e; }
+.wpmme-footer__msg.is-success { color: #00701a; }
+.wpmme-footer__msg.is-error { color: #b32d2e; }
+.wpmme-footer__msg.is-warning { color: #8a6d00; }
