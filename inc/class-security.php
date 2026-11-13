@@ -131,12 +131,29 @@ class WPMME_Security {
         }
     }
 
+    /**
+     * Hide the WordPress version in asset URLs without breaking cache busting.
+     *
+     * Only a ver equal to the WordPress version (core files) gives the version
+     * away; it becomes a salted hash that still changes when WordPress updates.
+     * Plugin and theme versions are kept: dropping them made browsers and
+     * Cloudflare keep serving old CSS/JS after an update (static files are
+     * cached for a year).
+     */
     public function remove_version_from_url($src) {
-        if (is_admin()) {
+        if (is_admin() || strpos($src, 'ver=') === false) {
             return $src;
         }
-        if (strpos($src, 'ver=') !== false) {
-            $src = remove_query_arg('ver', $src);
+
+        $query = wp_parse_url($src, PHP_URL_QUERY);
+        if (!$query) {
+            return $src;
+        }
+        parse_str($query, $args);
+        $wp_version = get_bloginfo('version');
+
+        if (isset($args['ver']) && $args['ver'] === $wp_version) {
+            $src = add_query_arg('ver', substr(wp_hash('wpmme-ver-' . $wp_version), 0, 8), $src);
         }
         return $src;
     }

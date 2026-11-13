@@ -241,7 +241,7 @@ $options = wpmme_get_options();
             <div class="wpmme-card-header">
                 <div class="wpmme-card-info">
                     <h3>Remove WP Version</h3>
-                    <p>Remove WordPress version meta tag from header, RSS, and assets.</p>
+                    <p>Remove WordPress version meta tag from header and RSS, and hash the WordPress version in core asset URLs. Plugin/theme asset versions are kept so updates are not stuck in cache.</p>
                 </div>
                 <label class="wpmme-switch">
                     <input type="checkbox" name="remove_version" <?php checked($options['remove_version']); ?>>

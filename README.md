@@ -25,7 +25,7 @@ MMe Core is a comprehensive WordPress plugin that combines essential optimizatio
 * **Disable REST API User Enumeration**: Prevents bots from scraping your user list via the REST API.
 * **Disable Author Archives**: Blocks author queries to hide usernames.
 * **Disable Comments**: Completely disables comments across the entire site.
-* **Remove WP Version**: Removes the WordPress version meta tag to hide your footprint.
+* **Remove WP Version**: Removes the WordPress version meta tag and hashes the WordPress version in core asset URLs to hide your footprint. Plugin and theme asset versions (`?ver=`) are kept, so CSS/JS updates are never stuck in browser or CDN caches.
 * **Clean Up Admin Bar**: Removes unnecessary items (WP Logo, Comments, Updates) from the top admin bar for a cleaner interface.
 
 ## Installation
