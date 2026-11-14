@@ -373,7 +373,7 @@ $wpmme_title = 'MMe Core Settings';
             <div class="wpmme-card-header">
                 <div class="wpmme-card-info">
                     <h3>Clean Up Admin Notices</h3>
-                    <p>Hide all plugin admin notices and nag messages globally, except on the Plugins page.</p>
+                    <p>Hide plugin nags and promo notices across wp-admin. Results of your own actions stay visible (new Application Password, Settings saved, errors), and nothing is hidden on the Plugins, Updates, Profile and Users screens.</p>
                 </div>
                 <label class="wpmme-switch">
                     <input type="checkbox" name="hide_notices" <?php checked($options['hide_notices']); ?>>

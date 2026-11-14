@@ -56,6 +56,9 @@ MMe Core updates itself from GitHub:
 
 ## Changelog
 
+### 1.1.1
+- Fix: **Clean Up Admin Notices** hid the new Application Password after clicking *Add New Application Password*, so the password could not be copied. It now hides only nags: notices that answer your own action (new Application Password, Settings saved, form errors, Post updated, inline notices) stay visible, and nothing is hidden on the Profile, Users, Plugins, Updates and Site Health screens.
+
 ### 1.1.0
 - New: **Cache Warmer** page. Choose the URLs (or import them from the sitemap), run them daily at a set time, or click **Run now** to see each page's cache status (HIT / MISS / BYPASS) live. Requests can go through 127.0.0.1 to skip Cloudflare on WordOps servers.
 - New: **Updates** page, like MMe Elementor Kit: installed vs latest version, changelog, **Check for updates**, update through the WordPress updater (also shown on the Plugins page, with a menu badge), and **Reinstall from GitHub**.
