@@ -56,6 +56,10 @@ MMe Core updates itself from GitHub:
 
 ## Changelog
 
+### 1.1.2
+- Fix: admin pages could look broken after an update (navigation, status box and Cache Warmer unstyled) because the browser or Cloudflare kept a half-written `admin.css`. Plugin CSS/JS now carry the file modification time in `?ver=`, so every changed file gets a new URL.
+- Cache Warmer: when the site has no page cache, the page now says so and shows the WordOps command to turn FastCGI cache on, instead of only "No page cache header found".
+
 ### 1.1.1
 - Fix: **Clean Up Admin Notices** hid the new Application Password after clicking *Add New Application Password*, so the password could not be copied. It now hides only nags: notices that answer your own action (new Application Password, Settings saved, form errors, Post updated, inline notices) stay visible, and nothing is hidden on the Profile, Users, Plugins, Updates and Site Health screens.
 

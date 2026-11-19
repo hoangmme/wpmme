@@ -173,7 +173,9 @@ jQuery(function ($) {
         if (!res.success) {
             text = 'Could not reach the home page.';
         } else if (res.data.status === '-') {
-            text = 'No page cache header found on the home page.';
+            var host = (wpmme_ajax.home || '').replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+            text = 'This site has no page cache (no X-Cache / FastCGI / Redis header on the home page), so there is nothing to warm. '
+                + 'On WordOps, turn it on with: wo site update ' + host + ' --wpfc';
         } else {
             text = 'Page cache answers on the home page: ' + res.data.status + ' (' + res.data.time + 's)';
         }

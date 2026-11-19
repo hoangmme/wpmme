@@ -3,7 +3,7 @@
  * Plugin Name: MMe Core
  * Plugin URI: https://mme.vn
  * Description: All-in-One Optimization & Security plugin by MMe.
- * Version: 1.1.1 (Build 20261114.1130)
+ * Version: 1.1.2 (Build 20261119.1306)
  * Author: Hoji
  * Author URI: https://mme.vn
  * Text Domain: wpmme
@@ -15,11 +15,20 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('WPMME_VERSION', '1.1.1');
-define('WPMME_BUILD', '20261114.1130');
+define('WPMME_VERSION', '1.1.2');
+define('WPMME_BUILD', '20261119.1306');
 define('WPMME_DIR', plugin_dir_path(__FILE__));
 define('WPMME_URL', plugin_dir_url(__FILE__));
 define('WPMME_BASENAME', plugin_basename(__FILE__));
+
+/**
+ * Asset version = plugin version + file modification time, so a changed file always
+ * gets a new URL (browsers and Cloudflare never keep serving an old or half-written copy).
+ */
+function wpmme_asset_ver($relative_path) {
+    $file = WPMME_DIR . ltrim($relative_path, '/');
+    return file_exists($file) ? WPMME_VERSION . '.' . filemtime($file) : WPMME_VERSION;
+}
 
 // Load Feature Classes
 require_once WPMME_DIR . 'inc/class-log.php';
@@ -243,10 +252,10 @@ function wpmme_admin_assets($hook) {
     if ('wpmme-settings' === $page) {
         wp_enqueue_media();
     }
-    wp_enqueue_style('wpmme-admin-css', WPMME_URL . 'assets/css/admin.css', array(), WPMME_VERSION);
-    wp_enqueue_script('wpmme-admin-js', WPMME_URL . 'assets/js/admin.js', array('jquery'), WPMME_VERSION, true);
+    wp_enqueue_style('wpmme-admin-css', WPMME_URL . 'assets/css/admin.css', array(), wpmme_asset_ver('assets/css/admin.css'));
+    wp_enqueue_script('wpmme-admin-js', WPMME_URL . 'assets/js/admin.js', array('jquery'), wpmme_asset_ver('assets/js/admin.js'), true);
     if ('wpmme-cache' === $page) {
-        wp_enqueue_script('wpmme-cache-warmer', WPMME_URL . 'assets/js/cache-warmer.js', array('jquery', 'wpmme-admin-js'), WPMME_VERSION, true);
+        wp_enqueue_script('wpmme-cache-warmer', WPMME_URL . 'assets/js/cache-warmer.js', array('jquery', 'wpmme-admin-js'), wpmme_asset_ver('assets/js/cache-warmer.js'), true);
     }
 
     wp_localize_script('wpmme-admin-js', 'wpmme_ajax', array(

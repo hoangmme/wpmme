@@ -31,8 +31,8 @@ class WPMME_Media_Replace {
         }
 
         wp_enqueue_media();
-        wp_enqueue_style('wpmme-media-replace-css', WPMME_URL . 'assets/css/wpmme-media-replace.css', array(), WPMME_VERSION);
-        wp_enqueue_script('wpmme-media-replace-js', WPMME_URL . 'assets/js/wpmme-media-replace.js', array('jquery', 'media-views'), WPMME_VERSION, true);
+        wp_enqueue_style('wpmme-media-replace-css', WPMME_URL . 'assets/css/wpmme-media-replace.css', array(), wpmme_asset_ver('assets/css/wpmme-media-replace.css'));
+        wp_enqueue_script('wpmme-media-replace-js', WPMME_URL . 'assets/js/wpmme-media-replace.js', array('jquery', 'media-views'), wpmme_asset_ver('assets/js/wpmme-media-replace.js'), true);
 
         wp_localize_script('wpmme-media-replace-js', 'mediaReplace', array(
             'selectMediaText' => __('Select Replacement Media', 'wpmme'),
